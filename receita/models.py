@@ -29,5 +29,6 @@ class Receita(models.Model):
     usuario=models.ForeignKey(User,on_delete=models.PROTECT)
     def __str__(self):
         return f"{self.nome} do {self.usuario} na data {self.data_cadastro}"
-# comentário so para criar novo branch    
+# comentário so para criar novo branch testando
+   
     
