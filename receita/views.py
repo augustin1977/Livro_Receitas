@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-# Create your views here.
+
 def cadastrar_receita(requeste):
     return HttpResponse("Cadastro Receita")
 def cadastrar_unidade(requeste):
