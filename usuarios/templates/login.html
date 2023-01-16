@@ -1,1 +1,13 @@
-<h1> Login do Usuarios </h1>
+{% extends 'base.html'%}
+{% block 'titulo'%} Login Usuário {% endblock %}
+{% block 'conteudo'%} 
+<div class ='container'>
+    {% if status == '0'%}
+    <div class="alert alert-danger" role="alert">
+        Cadastro realizado com sucesso, pode seguir com o login
+      </div>
+    {% endif %}
+    
+</div>
+<h1>  Cadastre-se</h1>    
+{% endblock %}

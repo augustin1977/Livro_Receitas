@@ -1,1 +1,48 @@
-<h1> Cadastro de Usuários</h1>
+
+{% extends 'base.html'%}
+{% block 'titulo'%} Cadastro {% endblock %}
+{% block 'conteudo'%} 
+<div class ='container'>
+    
+    {% if status == '1'%}
+    <div class="alert alert-danger" role="alert">
+        Usuario ou e-mail ja cadastrados, favor contactar o administrador para obter nova senha
+      </div>
+    {% endif %}
+
+    {% if status == '2'%}
+    <div class="alert alert-danger" role="alert">
+        Campo obrigatório com valor nulo, varifique o formulário
+      </div>
+    {% endif %}
+
+    {% if status == '3'%}
+    <div class="alert alert-danger" role="alert">
+        Senha muito curta, as senhas devme ter no minimo 8 caracteres alfanumericos
+      </div>
+    {% endif %}
+    <div class='row'>
+    <div class='col-md-3'></div>
+    <div class="col-md">
+    <h1>  Cadastre-se</h1>
+    <hr>
+    <form method ="POST" action="{% url 'valida_cadastro'%}"> {% csrf_token %}
+        <label> nome</label>
+        <input name="nome" class="form-control" type="text" placeholder="Nome">
+        <br>   
+        <label> Email de Recuperação</label>
+        <input name="email" class="form-control" type="text" placeholder="nome@servidor.com">
+        <br>
+        <label>  senha </label>
+        <input name="senha" class="form-control" type="password" placeholder="">
+        <br>
+        <input class="btn btn-info btn-blue"type="submit" value="enviar">
+    </form>
+    </hr>
+
+    </div>
+    <div class='col-md-3'></div>
+    
+</div>
+
+{% endblock %}
