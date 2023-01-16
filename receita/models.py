@@ -30,7 +30,7 @@ class Receita(models.Model):
     def __str__(self):
         return f"{self.nome} do {self.usuario} na data {self.data_cadastro}"
 # comentário so para criar novo branch testando
-# novo coment novamente
+# novo comentário
 
    
     
