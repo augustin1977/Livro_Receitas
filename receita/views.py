@@ -7,7 +7,7 @@ def cadastrar_unidade(requeste):
     return HttpResponse("Cadastro Unidade")
 def cadastrar_material(requeste):
     return HttpResponse("Cadastro Material")
-def cadastrar_Ingrediente(requeste):
+def cadastrar_ingrediente(requeste):
     return HttpResponse("Cadastro Ingrediente")
 
 
