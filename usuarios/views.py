@@ -39,3 +39,19 @@ def valida_cadastro(request):
     except:
         pass
         return redirect('/auth/cadastro/?status=3') # retorna erro geral de gravação no banco de dados
+    return HttpResponse("Erro na pagina de cadastro - View")
+
+def validar_login(request):
+    email=request.POST.get('email')
+    senha=request.POST.get('senha')
+    senha=sha256(senha.encode()).hexdigest()
+    usuario=Usuario.objects.filter(email=email).filter(senha=senha)
+    if len(usuario)==0:
+        return redirect('/auth/login/?status=1')
+    else:
+        request.session['usuario']= usuario[0].id
+        return redirect(f'/receita/home/')
+    
+def sair(request):
+    request.session.flush()
+    return redirect('/auth/login')
