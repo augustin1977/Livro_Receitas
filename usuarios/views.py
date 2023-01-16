@@ -5,17 +5,21 @@ from django.shortcuts import redirect
 from hashlib import sha256
 
 def login(request):
+    # cria a view do login do usuário
     status=str(request.GET.get('status'))
     return render(request, "login.html", {'status':status})
 
 def cadastrar(request):
+    # cria a view do cadastro de usuaário
     status=str(request.GET.get('status'))
     return render(request, "cadastro.html", {'status':status})
 
 def editar(request):
+    # Cria a view que edita o cadastro do usuário, ainda não implementado
     return render(request, "editar.html")
 
 def valida_cadastro(request):
+    # validar cadastro, falta implementar verificação de e-mail
     nome=request.POST.get('nome')
     email=request.POST.get('email')
     senha=request.POST.get('senha')
@@ -32,8 +36,8 @@ def valida_cadastro(request):
         return redirect('/auth/cadastrar/?status=3') # Senha muito curta
     try:
         senha= sha256(senha.encode()).hexdigest() # recuperando senha e codificando num hash sha256
-        usuario=Usuario(nome=nome, senha=senha, email=email, tipo=tipo)
-        usuario.save()
+        usuario=Usuario(nome=nome, senha=senha, email=email, tipo=tipo) # cria um objeto usuário com as informações recebidas do fomulario
+        usuario.save() # salva o objeto usuário no banco de dados
         return redirect('/auth/login/?status=0') # retorna sem erro
     except:
         return redirect('/auth/cadastrar/?status=4') # retorna erro geral de gravação no banco de dados
@@ -41,6 +45,7 @@ def valida_cadastro(request):
     return HttpResponse("Erro na pagina de cadastro - View")
 
 def validar_login(request):
+    # validar o login feito na pagina de login
     email=request.POST.get('email')
     senha=request.POST.get('senha')
     senha=sha256(senha.encode()).hexdigest()
@@ -52,5 +57,5 @@ def validar_login(request):
         return redirect(f'/receita/home/')
     
 def sair(request):
-    request.session.flush()
+    request.session.flush() # sair do usuário
     return redirect('/auth/login')
