@@ -1,1 +1,1 @@
-#sem informações
+# sem informações relevantes
