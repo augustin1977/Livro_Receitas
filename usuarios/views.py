@@ -1,12 +1,12 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 
-def login(requeste):
-    return HttpResponse("Login de Usuário")
+def login(request):
+    return render(request, "login.html")
 
-def cadastrar(requeste):
-    return HttpResponse("Cadastro de Usuário")
+def cadastrar(request):
+    return render(request, "cadastro.html")
 
-def editar(requeste):
-    return HttpResponse("Editar Perfil de Usuário")
+def editar(request):
+    return render(request, "editar.html")
 
