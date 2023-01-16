@@ -21,6 +21,11 @@
         Senha muito curta, as senhas devme ter no minimo 8 caracteres alfanumericos
       </div>
     {% endif %}
+    {% if status == '4'%}
+    <div class="alert alert-danger" role="alert">
+        Erro Geral no cadastro de Usuários
+      </div>
+    {% endif %}
     <div class='row'>
     <div class='col-md-3'></div>
     <div class="col-md">

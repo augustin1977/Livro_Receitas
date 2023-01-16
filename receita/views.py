@@ -1,5 +1,6 @@
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
+from usuarios.models import Usuario
 
 def cadastrar_receita(request):
     if not request.session.get('usuario'):
@@ -24,4 +25,6 @@ def cadastrar(request):
 def home(request):
     if not request.session.get('usuario'):
         return redirect('/auth/login/?status=2')
-    return HttpResponse("Olá Home")
+    usuario=Usuario.objects.get(id=request.session['usuario'])
+    
+    return HttpResponse(f"Olá {usuario}")

@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from .models import Usuario
+from .models import Usuario,Tipos
 from django.shortcuts import redirect 
 from hashlib import sha256
 
@@ -19,8 +19,7 @@ def valida_cadastro(request):
     nome=request.POST.get('nome')
     email=request.POST.get('email')
     senha=request.POST.get('senha')
-    
-    tipo="user"
+    tipo=Tipos.objects.get(tipo="user")
     usuario= Usuario.objects.filter(email=email)
     if len(usuario)>0:
         return redirect('/auth/cadastrar/?status=1') # retorna erro de usuario ja existente
@@ -37,8 +36,8 @@ def valida_cadastro(request):
         usuario.save()
         return redirect('/auth/login/?status=0') # retorna sem erro
     except:
-        pass
-        return redirect('/auth/cadastro/?status=3') # retorna erro geral de gravação no banco de dados
+        return redirect('/auth/cadastrar/?status=4') # retorna erro geral de gravação no banco de dados
+  
     return HttpResponse("Erro na pagina de cadastro - View")
 
 def validar_login(request):
