@@ -6,4 +6,4 @@ from .models import *
 admin.site.register(Tipos)
 @admin.register(Usuario)
 class UsuarioAdmin(admin.ModelAdmin):
-   readonly_fields=("nome","email","senha","tipo")
+   readonly_fields=("nome","email","senha")
