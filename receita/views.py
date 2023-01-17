@@ -1,7 +1,7 @@
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
 from usuarios.models import Usuario
-
+from .models import *
 def cadastrar_receita(request):
     if not request.session.get('usuario'):
         return redirect('/auth/login/?status=2')
@@ -26,5 +26,11 @@ def home(request):
     if not request.session.get('usuario'):
         return redirect('/auth/login/?status=2')
     usuario=Usuario.objects.get(id=request.session['usuario'])
+    receitas=list(Receita.objects.filter(usuario=usuario))
     
-    return HttpResponse(f"Olá {usuario}")
+    print (receitas)
+    for receita in receitas:
+        ingredientes=Ingrediente.objects.filter(receita__id=receita.id)
+        print(receita.ingredientes)
+
+    return render(request,"home.html", {'Receitas':receitas})

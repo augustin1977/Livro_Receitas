@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from .models import Usuario,Tipos
+from .models import Usuario,Tipos,Familia
 from django.shortcuts import redirect 
 from hashlib import sha256
 import re
@@ -25,6 +25,7 @@ def valida_cadastro(request):
     senha=request.POST.get('senha')
     tipo=Tipos.objects.get(tipo="user")
     usuario= Usuario.objects.filter(email=email)
+    familia=Familia.objects.get(nomeFamilia="Sem_Familia")
     if len(usuario)>0:
         return redirect('/auth/cadastrar/?status=1') # retorna erro de usuario ja existente
     usuario= Usuario.objects.filter(nome=nome)
@@ -41,7 +42,7 @@ def valida_cadastro(request):
         return redirect('/auth/cadastrar/?status=3') # Senha invalida
     try:
         senha= sha256(senha.encode()).hexdigest() # recuperando senha e codificando num hash sha256
-        usuario=Usuario(nome=nome, senha=senha, email=email, tipo=tipo) # cria um objeto usuário com as informações recebidas do fomulario
+        usuario=Usuario(nome=nome, senha=senha, email=email, tipo=tipo, nomeFamilia=familia) # cria um objeto usuário com as informações recebidas do fomulario
         usuario.save() # salva o objeto usuário no banco de dados
         return redirect('/auth/login/?status=0') # retorna sem erro
     except:
@@ -55,6 +56,7 @@ def validar_login(request):
     senha=request.POST.get('senha')
     senha=sha256(senha.encode()).hexdigest()
     usuario=Usuario.objects.filter(email=email).filter(senha=senha)
+    
     if len(usuario)==0:
         return redirect('/auth/login/?status=1')
     else:
