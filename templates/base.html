@@ -16,7 +16,11 @@
   <body>
     <nav class="navbar navbar-dark bg-dark">
         <a class="navbar-brand" href="#">Livro de Receitas</a>
+        {% block 'menu' %} {% endblock %}
+        <a class="navbar-brand" href="{% url 'sair' %}">Sair</a>
+      
       </nav>
+
     {% block 'conteudo' %} {% endblock %}
 
     <!-- Optional JavaScript; choose one of the two! -->

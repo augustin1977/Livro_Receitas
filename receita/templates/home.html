@@ -1,20 +1,17 @@
 {% extends 'base.html' %}
+{% block 'menu'%} <a class="navbar-brand" href="{% url 'cadastrar_receita' %}">Cadastrar Receita</a>{% endblock %}
 {% block 'conteudo' %}
 <div class="container">
     <div class="row">
         {% for receita in Receitas %}
         <div class="col-md">
+            <a href="{% url 'mostrar_receita' %}?receita={{ receita.id }}">
             <div class="card" style="width:20rem;">
                 <div class="card-body">
-                    <h5 class="card-title"> {{receita.nome}} </h5>
-                    <h6 class="card-subtitle"> {{receita.usuario}}<h6>
-                       
-                            <p class="card-text">{{ingrediente}} </p>
-                      
-                        <p class="card-text">{{receita.modo_de_fazer}} </p>    
-                    
+                    <h5 class="card-title">Receita: {{receita.nome}} </h5>
+                    <h6 class="card-subtitle">Criador: {{receita.usuario}}<h6>                    
                 </div>
-            </div>
+            </div></a>
         </div>
         {% endfor %}
     </div>

@@ -11,7 +11,7 @@ class Materiais(models.Model):
     nome=models.CharField( max_length=150)
     unidade=models.ForeignKey(Unidades, on_delete=models.CASCADE)
     def __str__(self):
-        return f"{self.nome} em {self.unidade}"
+        return f"{self.nome}"
 
 """ Classe Ingredientes cria o cadastros de ingredientes usados em cada receita, ou seja é identico ao 
 cadastro de materiais, no entanto tem a vinculação com a receita"""
@@ -19,7 +19,9 @@ class Ingrediente(models.Model):
     nome=models.ForeignKey(Materiais, on_delete=models.CASCADE)
     quantidade=models.DecimalField( max_digits=12, decimal_places=2)
     def __str__(self):
-        return f"{self.nome} - {self. quantidade}"
+        retorno=f"{self.nome} - {self. quantidade} {Materiais.objects.get(id=self.nome.id).unidade}"
+   
+        return retorno
 
 """Classe receita é onde ficam aramzenadas as receitas propriamente ditas"""
 class Receita(models.Model):

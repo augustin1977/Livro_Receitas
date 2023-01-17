@@ -1,0 +1,19 @@
+{% extends 'base.html'%}
+{% block 'titulo'%} Cadastro {% endblock %}
+{% block 'menu'%} <a class="navbar-brand" href="{% url 'home' %}">Inicio</a>{% endblock %}
+
+{% block 'conteudo'%} 
+<h5>Mostrar Receita</h5>
+<h5 class="card-title">Receita: {{ receita.nome }} </h5>
+<h6 class="card-subtitle">Criador: {{ receita.usuario }}<h6>
+<br>
+<h5 class="card-subtitle">Ingredientes<h6>   
+{% for ingredientes in receita.ingredientes_copy %}
+    <div class="card-text">- {{ ingredientes }}<br></div>
+{% endfor %}
+<br>
+<h5 class="card-subtitle">Modo de Preparo<h6> 
+<p class="card-text">{{receita.modo_de_fazer}} </p>   
+
+<a href="{% url 'home' %}"class="btn btn-warning btn-mg"> Voltar </a>
+{% endblock %}
