@@ -1,3 +1,5 @@
 # Livro_Receitas
 Livros Receitas Web - Djando
-Este projeto é um tentativa de gerar um aplicativo WB para armazenar receitas.
+Este u projeto de aplicativo WEB para armazenar receitas colinarias.
+
+Projeto ainda em desenvolvimento.
