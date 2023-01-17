@@ -1,0 +1,38 @@
+{% extends 'base.html'%}
+{% block 'titulo'%} Cadastro {% endblock %}
+{% block 'menu'%} <a class="navbar-brand" href="{% url 'home' %}">Inicio</a>{% endblock %}
+
+{% block 'conteudo'%} 
+<div class ='container'>
+<h5>Cadastrar Receita</h5>
+<hr>
+    <form method ="POST" action="{% url 'valida_cadastro_material' %}"> {% csrf_token %}
+        <label>Nome da Receita</label>
+        <input name="nome" class="form-control" type="text" placeholder="Nome">
+        <br> 
+        
+        <label>Ingedientes</label>
+        <select name="nomeIngrediente" class="form-control" placeholder="Ingrediente"> 
+        {% for ingrediente in materiais%}
+            <option value={{ ingrediente }}>{{ingrediente}} em {{ingrediente.unidade}}</option>
+        {% endfor %}
+        </select> 
+        <label>quantidade</label>
+        <input name="Quantidade" class="form-control" type="text" placeholder="Quantidade">
+        <button  class="btn btn-info btn-blue"type="button" value="Cadastrar Ingrediente" action=cadastraIngedisntes.js> Cadastrar Ingrediente </button>
+
+        <br>
+        <label>  Ingrediente Selecionados </label>
+        <textarea name="IngredientesSelecionados" class="form-control" placeholder=""></textarea>
+        <label>  Modo de Preparo </label>
+        <textarea name="ModoPreparo" class="form-control"  placeholder=""></textarea>
+        <br>
+        <input class="btn btn-info btn-blue"type="submit" value="Cadastrar">
+        <a href="{% url 'home' %}"class="btn btn-warning btn-mg"> Voltar </a>
+    </form>
+    </hr>
+</div>
+
+{% endblock %}
+
+
