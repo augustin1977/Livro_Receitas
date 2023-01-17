@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from .models import Usuario,Tipos
 from django.shortcuts import redirect 
 from hashlib import sha256
-
+import re
 def login(request):
     # cria a view do login do usuário
     status=str(request.GET.get('status'))
@@ -32,15 +32,20 @@ def valida_cadastro(request):
         return redirect('/auth/cadastrar/?status=1') # retorna erro de usuario ja existente
     if len(nome.strip())==0 or len(email.strip())==0 :
         return redirect('/auth/cadastrar/?status=2') # retorna erro valor nulo
-    if len(senha.strip())<8:
-        return redirect('/auth/cadastrar/?status=3') # Senha muito curta
+    regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'    
+    if not(re.search(regex,email)): 
+        return redirect('/auth/cadastrar/?status=4') # email invalido   
+    
+    regex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%<^&*?()])[a-zA-Z0-9!@#$%<^&*?()]{6,}" # verifica se tem ao menos uma letra, um numero, um simbolo e no minimo 6 caracteres 
+    if  not (re.search(regex, senha)) :
+        return redirect('/auth/cadastrar/?status=3') # Senha invalida
     try:
         senha= sha256(senha.encode()).hexdigest() # recuperando senha e codificando num hash sha256
         usuario=Usuario(nome=nome, senha=senha, email=email, tipo=tipo) # cria um objeto usuário com as informações recebidas do fomulario
         usuario.save() # salva o objeto usuário no banco de dados
         return redirect('/auth/login/?status=0') # retorna sem erro
     except:
-        return redirect('/auth/cadastrar/?status=4') # retorna erro geral de gravação no banco de dados
+        return redirect('/auth/cadastrar/?status=99') # retorna erro geral de gravação no banco de dados
   
     return HttpResponse("Erro na pagina de cadastro - View")
 

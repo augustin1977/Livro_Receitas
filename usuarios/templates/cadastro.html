@@ -18,10 +18,15 @@
 
     {% if status == '3'%}
     <div class="alert alert-danger" role="alert">
-        Senha muito curta, as senhas devme ter no minimo 8 caracteres alfanumericos
+        Senha muito curta, as senhas devem ter no minimo 6 caracteres alfanumericos e deve conter, letras maiusculas, minusculas, numeros e simbolos
       </div>
     {% endif %}
     {% if status == '4'%}
+    <div class="alert alert-danger" role="alert">
+        Email invalido, por favor verifique a grafia do email.
+      </div>
+    {% endif %}
+    {% if status == '99'%}
     <div class="alert alert-danger" role="alert">
         Erro Geral no cadastro de Usuários
       </div>
