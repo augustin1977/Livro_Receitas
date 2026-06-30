@@ -11,5 +11,8 @@ urlpatterns = [
     path("cadastrar_ingrediente/", views.cadastrar_ingrediente),
     path("home/",views.home, name="home"),
     path("mostrar_receita/",views.mostrar_receita, name="mostrar_receita"),
+    path('confirmar-exclusao/', views.confirmar_exclusao, name='confirmar_exclusao'),
+    path('excluir-receita/', views.excluir_receita, name='excluir_receita'),
+    path('editar/', views.editar_receita, name='editar_receita'),
     
 ]

@@ -3,5 +3,5 @@ from .models import *
 
 admin.site.register(Receita)
 admin.site.register(Ingrediente)
-admin.site.register(Unidades)
-admin.site.register(Materiais)
+admin.site.register(Unidade)
+admin.site.register(Material)

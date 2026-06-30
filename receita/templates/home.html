@@ -1,30 +1,79 @@
 {% extends 'base.html' %}
 {% block 'menu'%} <a class="navbar-brand" href="{% url 'cadastrar_receita' %}">Cadastrar Receita</a>{% endblock %}
 {% block 'conteudo' %}
-<table class="table table-hover">
+
+<div class="container mt-4">
+    <h3 class="mb-3">Minhas Receitas Pessoais</h3>
+<table class="table table-hover mb-5">
     <thead>
       <tr>
         <th scope="col">#</th>
         <th scope="col">Receita</th>
         <th scope="col">Criador</th>
         <th scope="col">Data Cadastro</th>
-        <th scope="col">Detalhes</th>
-      </tr>
+        <th scope="col">Ações</th> </tr>
     </thead>
     <tbody>
-        {% for receita in Receitas %}
+        {% for receita in ReceitasPessoais %}
         <tr>
-        
-        <th scope="row">{{receita.id}}</th>
-        <td>{{receita.nome}}</td>
-        <td>{{receita.usuario}}</td>
-        <td>{{receita.data_cadastro}}</td>
-        <td><a href="{% url 'mostrar_receita' %}?receita={{ receita.id }}">Link</a>
-        
-      </tr>
-      {% endfor %}
+            <th scope="row">{{ receita.numero_exibicao }}</th>
+            <td>{{receita.nome}}</td>
+            <td>{{receita.usuario.nome}}</td>
+            <td>{{receita.data_cadastro|date:"d/m/Y H:i"}}</td>
+            <td>
+              <a href="{% url 'mostrar_receita' %}?receita={{ receita.id }}" class="btn btn-outline-success me-1" title="Visualizar">
+                    <i class="bi bi-file-earmark-text"></i>
+                </a>
+                <a href="{% url 'editar_receita' %}?receita={{ receita.id }}" class="btn btn btn-outline-primary me-1" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{% url 'confirmar_exclusao' %}?receita={{ receita.id }}" class="btn btn btn-outline-danger" title="Excluir">
+                    <i class="bi bi-trash"></i>
+                </a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="text-muted">Você ainda não cadastrou nenhuma receita.</td>
+        </tr>
+        {% endfor %}
     </tbody>
-  </table>
+</table>
 
+    {% for grupo in Grupos %}
+        <h3 class="mt-4 mb-3">Grupo: {{ grupo.nome }}</h3>
+        <table class="table table-hover mb-5">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Receita</th>
+                <th scope="col">Criador</th>
+                <th scope="col">Data Cadastro</th>
+                <th scope="col">Ações</th> </tr>
+              </tr>
+            </thead>
+            <tbody>
+                {# Acessa a lista que já veio filtrada do banco de dados #}
+                {% for receita in grupo.receitas_filtradas %}
+                <tr>
+                    <th scope="row">{{ receita.numero_exibicao }}</th>
+                    <td>{{receita.nome}}</td>
+                    <td>{{receita.usuario.nome}}</td>
+                    <td>{{receita.data_cadastro|date:"d/m/Y H:i"}}</td>
+                    <td><a href="{% url 'mostrar_receita' %}?receita={{ receita.id }}" class="btn btn-outline-success me-1" title="Visualizar">
+                    <i class="bi bi-file-earmark-text"></i>
+                </a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-muted">Nenhuma receita nova neste grupo.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% empty %}
+        <p class="text-muted">Você não participa de nenhum grupo ainda.</p>
+    {% endfor %}
+</div>
 
-{% endblock  %}
+{% endblock %}

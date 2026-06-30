@@ -1,8 +1,11 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from .models import Usuario,Tipos,Familia
+from .models import Usuario,Tipo,Grupo
 from django.shortcuts import redirect 
 from hashlib import sha256
+from django.contrib.auth import authenticate
+from django.contrib.auth import login as login_django
+
 import re
 def login(request):
     # cria a view do login do usuário
@@ -23,9 +26,9 @@ def valida_cadastro(request):
     nome=request.POST.get('nome')
     email=request.POST.get('email')
     senha=request.POST.get('senha')
-    tipo=Tipos.objects.get(tipo="user")
+    tipo=Tipo.objects.get(tipo="user")
     usuario= Usuario.objects.filter(email=email)
-    familia=Familia.objects.get(nomeFamilia="Sem_Familia")
+    familia=Grupo.objects.get(nome="Sem_Familia")
     if len(usuario)>0:
         return redirect('/auth/cadastrar/?status=1') # retorna erro de usuario ja existente
     usuario= Usuario.objects.filter(nome=nome)
@@ -42,7 +45,7 @@ def valida_cadastro(request):
         return redirect('/auth/cadastrar/?status=3') # Senha invalida
     try:
         senha= sha256(senha.encode()).hexdigest() # recuperando senha e codificando num hash sha256
-        usuario=Usuario(nome=nome, senha=senha, email=email, tipo=tipo, nomeFamilia=familia) # cria um objeto usuário com as informações recebidas do fomulario
+        usuario=Usuario(nome=nome, senha=senha, email=email, tipo=tipo, nome_grupo=familia) # cria um objeto usuário com as informações recebidas do fomulario
         usuario.save() # salva o objeto usuário no banco de dados
         return redirect('/auth/login/?status=0') # retorna sem erro
     except:
@@ -51,17 +54,32 @@ def valida_cadastro(request):
     return HttpResponse("Erro na pagina de cadastro - View")
 
 def validar_login(request):
-    # validar o login feito na pagina de login
-    email=request.POST.get('email')
-    senha=request.POST.get('senha')
-    senha=sha256(senha.encode()).hexdigest()
-    usuario=Usuario.objects.filter(email=email).filter(senha=senha)
-    
-    if len(usuario)==0:
-        return redirect('/auth/login/?status=1')
-    else:
-        request.session['usuario']= usuario[0].id
-        return redirect(f'/receita/home/')
+    if request.method == "POST":
+        nome = request.POST.get('email')
+        senha = request.POST.get('senha')
+        
+        # 1. Como o login padrão do Django busca por 'username', precisamos
+        # encontrar o username correspondente ao e-mail digitado.
+        try:
+            usuario_objeto = Usuario.objects.get(username=nome)
+            username = usuario_objeto.username
+        except Usuario.DoesNotExist:
+            # Se o e-mail não existir, redireciona informando erro
+            return redirect('/auth/login/?status=1')
+
+        # 2. O authenticate valida se o username e a senha batem
+        usuario_autenticado = authenticate(request, username=username, password=senha)
+        
+        if usuario_autenticado is not None:
+            # 3. Loga o usuário criando a sessão segura nativa do Django
+            login_django(request, usuario_autenticado)
+            return redirect('/receita/home/')
+        else:
+            # Senha incorreta
+            return redirect('/auth/login/?status=1')
+            
+    # Caso tentem acessar a URL via GET diretamente
+    return redirect('/auth/login/')
     
 def sair(request):
     request.session.flush() # sair do usuário

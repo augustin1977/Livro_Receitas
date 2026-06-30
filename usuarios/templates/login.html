@@ -19,7 +19,7 @@
       </div>
     {% endif %}
     <form method ="POST" action="{% url 'validar_login'%}"> {% csrf_token %}  
-        <label> Email de Recuperação</label>
+        <label> Email </label>
         <input name="email" class="form-control" type="text" placeholder="nome@servidor.com">
         <br>
         <label>  senha </label>

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block 'titulo' %} Confirmar Exclusão {% endblock %}
+{% block 'menu' %} <a class="navbar-brand" href="{% url 'home' %}">Início</a> {% endblock %}
+
+{% block 'conteudo' %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8"> <div class="card border-danger shadow">
+                <div class="card-header bg-danger text-white text-center">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Atenção!</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center">
+    <p class="fs-5 text-dark">Você tem certeza que deseja excluir permanentemente a receita abaixo?</p>
+    
+    <div class="alert alert-warning py-2 text-center" role="alert">
+        <i class="bi bi-exclamation-octagon-fill"></i> 
+        <strong>Aviso importante:</strong> Esta ação é irreversível. Ao confirmar, todos os ingredientes vinculados, as quantidades e as instruções do modo de preparo serão apagados do sistema sem possibilidade de recuperação.
+    </div>
+
+    <h2 class="text-danger my-3">{{ receita.nome }}</h2>
+    <p class="text-muted small">Cadastrada em: {{ receita.data_cadastro|date:"d/m/Y H:i" }}</p>
+</div>
+                    
+                    <div class="bg-light p-3 rounded border my-4">
+                        <h5 class="text-secondary"><i class="bi bi-egg-fried"></i> Ingredientes cadastrados:</h5>
+                        <ul class="mb-3">
+                            {% for ingrediente in receita.ingredientes.all %}
+                                <li>{{ ingrediente }}</li>
+                            {% empty %}
+                                <li class="text-muted">Nenhum ingrediente encontrado.</li>
+                            {% endfor %}
+                        </ul>
+
+                        <h5 class="text-secondary"><i class="bi bi-journal-text"></i> Modo de Preparo:</h5>
+                        <p class="text-dark mb-0" style="white-space: pre-line;">{{ receita.modo_de_fazer }}</p>
+                    </div>
+                    
+                    <form method="POST" action="{% url 'excluir_receita' %}"> {% csrf_token %}
+                        <input type="hidden" name="receita_id" value="{{ receita.id }}">
+                        
+                        <div class="d-flex justify-content-center gap-3 mt-4">
+                            <button type="submit" class="btn btn-danger px-4">Sim, excluir tudo</button>
+                            <a href="{% url 'home' %}" class="btn btn-secondary px-4">Cancelar e Voltar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

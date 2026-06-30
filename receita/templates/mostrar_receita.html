@@ -1,19 +1,47 @@
-{% extends 'base.html'%}
-{% block 'titulo'%} Cadastro {% endblock %}
-{% block 'menu'%} <a class="navbar-brand" href="{% url 'home' %}">Inicio</a>{% endblock %}
+{% extends 'base.html' %}
+{% block 'titulo' %} Receita - {{ receita.nome }} {% endblock %}
+{% block 'menu' %} <a class="navbar-brand" href="{% url 'home' %}">Início</a> {% endblock %}
 
-{% block 'conteudo'%} 
-<h5>Mostrar Receita</h5>
-<h5 class="card-title">Receita: {{ receita.nome }} </h5>
-<h6 class="card-subtitle">Criador: {{ receita.usuario }}<h6>
-<br>
-<h5 class="card-subtitle">Ingredientes<h6>   
-{% for ingredientes in receita.ingredientes_copy %}
-    <div class="card-text">- {{ ingredientes }}<br></div>
-{% endfor %}
-<br>
-<h5 class="card-subtitle">Modo de Preparo<h6> 
-<p class="card-text">{{receita.modo_de_fazer}} </p>   
+{% block 'conteudo' %}
+<div class="container mt-4">
+    
+    <div class="text-center mb-4">
+        <h1 class="display-5">{{ receita.nome }}</h1>
+        <p class="text-muted">Criado por: {{ receita.usuario.nome }} | Cadastrada em: {{ receita.data_cadastro|date:"d/m/Y" }}</p>
+    </div>
 
-<a href="{% url 'home' %}"class="btn btn-warning btn-mg"> Voltar </a>
+    <hr>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            
+            <h3 class="h4 mb-3">Ingredientes</h3>
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% for ingrediente in receita.ingredientes_copy %}
+                            <li class="py-1 border-bottom last-border-0">
+                                <i class="text-primary">&bull;</i> {{ ingrediente }}
+                            </li>
+                        {% empty %}
+                            <li class="text-muted">Nenhum ingrediente registrado.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <h3 class="h4 mb-3">Modo de Preparo</h3>
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <p class="card-text text-justify" style="white-space: pre-line;">{{ receita.modo_de_fazer }}</p>
+                </div>
+            </div>
+
+            <div class="mt-4 mb-5">
+                <a href="{% url 'home' %}" class="btn btn-warning">Voltar para o Início</a>
+            </div>
+
+        </div>
+    </div>
+</div>
 {% endblock %}
