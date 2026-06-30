@@ -25,10 +25,7 @@ def cadastrar_unidade(request):
 def cadastrar_material(request):
 
     return HttpResponse("Cadastro Material")
-@usuario_obrigatorio
-def cadastrar_ingrediente(request):
 
-    return HttpResponse("Cadastro Ingrediente")
 @usuario_obrigatorio
 def valida_cadastro_material(request):
     if request.method == "POST":
