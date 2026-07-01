@@ -1,6 +1,8 @@
 # Livro_Receitas
-Livros Receitas Web - Djando
-Este é um projeto de aplicativo WEB para armazenar receitas culinarias.
-O proposito é criar um repositório de receitas para serem compartilhados entre as pessoas.
-Comida e cultura anda juntos, portanto criar um repositórios de receita é como cuidar da história e da cultura.
-Projeto em desenvolvimento.
+Este é um projeto de aplicativo WEB para armazenar receitas culinárias com o propósito de criar um repositório de receitas para serem compartilhadas entre as pessoas. Comida e cultura andam juntas, portanto criar um repositório de receitas é como cuidar da história e da cultura. O sistema conta com níveis de acesso diferentes (Usuário Comum, Admin de Grupo e Admin Geral) para garantir que cada pessoa veja e edite apenas o que tem permissão. Projeto em desenvolvimento.
+
+Para instalar e rodar o projeto em seu computador, certifique-se de ter o Python 3.x instalado. Abra o terminal (Prompt de Comando ou PowerShell), clone o repositório utilizando o comando git clone https://github.com/seu-usuario/seu-repositorio.git ou simplesmente baixe e extraia o arquivo ZIP do projeto. Em seguida, acesse a pasta criada digitando cd nome-da-pasta-do-projeto e instale todas as bibliotecas necessárias com o comando pip install -r requirements.txt. Com as dependências prontas, prepare o banco de dados executando python manage.py migrate, o que também carregará as configurações iniciais automaticamente. Para criar o seu acesso de administrador, utilize o comando python manage.py createsuperuser, definindo um nome de usuário, e-mail e uma senha (os caracteres não aparecem na tela por segurança enquanto você digita). Por fim, ligue o servidor de desenvolvimento com o comando python manage.py runserver e abra o seu navegador de internet no endereço http://127.0.0.1:8000/ para acessar o sistema.
+
+Para testar o controle de permissões na prática, faça login com a conta de Administrador Geral que você acabou de criar. Você notará que todo o menu do topo estará liberado. Acesse a opção de cadastrar usuários e crie uma nova conta com um nickname de sua preferência, que nascerá como um usuário comum. Depois disso, clique em Sair e faça o login utilizando essa nova conta comum. Ao navegar pelo sistema, você verá que os links de gerenciamento e cadastro de novos usuários ficarão cinzas e totalmente travados para este perfil, demonstrando que ele não tem autorização para modificar os dados de outras pessoas.
+
+Desenvolvido por Eric Augustin
