@@ -12,7 +12,7 @@ def login(request):
     # cria a view do login do usuário
     status=str(request.GET.get('status'))
     return render(request, "login.html", {'status':status})
-@admin_geral_obrigatorio
+
 def cadastrar(request):
     # cria a view do cadastro de usuaário
     status=str(request.GET.get('status'))
@@ -21,7 +21,7 @@ def cadastrar(request):
 def editar(request):
     # Cria a view que edita o cadastro do usuário, ainda não implementado
     return render(request, "editar.html")
-@admin_geral_obrigatorio
+
 def valida_cadastro(request):
     if request.method != "POST":
         return redirect('cadastrar_usuario')
