@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from .models import Usuario,Tipo,Grupo
 from django.shortcuts import redirect 
@@ -132,3 +132,85 @@ def validar_login(request):
 def sair(request):
     request.session.flush() # sair do usuário
     return redirect('/auth/login')
+
+@usuario_obrigatorio
+def cadastrar_grupo(request):
+    if request.method == "POST":
+        nome_grupo = request.POST.get('nome', '').strip()
+        
+        if not nome_grupo:
+            messages.error(request, "O nome do grupo não pode ficar em branco.")
+            return redirect('cadastrar_grupo')
+            
+        if Grupo.objects.filter(nome=nome_grupo).exists():
+            messages.error(request, "Já existe um grupo com este nome.")
+            return redirect('cadastrar_grupo')
+            
+        # Cria o grupo
+        novo_grupo = Grupo.objects.create(nome=nome_grupo)
+        # Adiciona o criador como membro e como administrador
+        novo_grupo.membros.add(request.user)
+        novo_grupo.administradores.add(request.user)
+        
+        messages.success(request, f"Grupo '{nome_grupo}' criado com sucesso! Agora você pode adicionar membros.")
+        return redirect('gerenciar_grupo', grupo_id=novo_grupo.id)
+        
+    return render(request, "cadastrar_grupo.html")
+
+@usuario_obrigatorio
+def gerenciar_grupo(request, grupo_id):
+    try:
+        grupo = Grupo.objects.get( id=grupo_id)
+        print(grupo)
+    except:
+        messages.error(request, "Erro ao acessar o grupo desejado.")
+        return redirect('/receita/home/')
+    
+    # Trava de segurança: apenas membros ou administradores gerais podem ver o grupo
+    if request.user not in grupo.membros.all() and not request.user.is_staff:
+        messages.error(request, "Você não tem permissão para acessar este grupo.")
+        return redirect('/receita/home/')
+        
+    return render(request, "gerenciar_grupo.html", {'grupo': grupo})
+
+@usuario_obrigatorio
+def adicionar_membro(request, grupo_id):
+    if request.method == "POST":
+        try:
+            grupo = Grupo.objects.get(id=grupo_id)
+        except Exception as e:
+            messages.error(request, f"Erro ao acessar o grupo desejado.")
+            return redirect('/receita/home/')
+    
+        
+        # Trava de segurança: apenas administradores do grupo ou admin geral podem pôr pessoas
+        if request.user not in grupo.administradores.all() and not request.user.is_staff:
+            messages.error(request, "Apenas administradores do grupo podem adicionar membros.")
+            return redirect('gerenciar_grupo', grupo_id=grupo.id)
+            
+        busca = request.POST.get('busca', '').strip()
+        
+        # Procura por nickname (username) ou e-mail
+        try:
+            novo_membro = Usuario.objects.get(username=busca)
+        except Usuario.DoesNotExist:
+            try:
+                novo_membro = Usuario.objects.get(email=busca)
+            except Usuario.DoesNotExist:
+                messages.error(request, f"Nenhum usuário encontrado com o login ou e-mail '{busca}'.")
+                return redirect('gerenciar_grupo', grupo_id=grupo.id)
+                
+        if novo_membro in grupo.membros.all():
+            messages.warning(request, f"O usuário '{novo_membro.username}' os dados já faz parte deste grupo.")
+        else:
+            grupo.membros.add(novo_membro)
+            messages.success(request, f"Usuário '{novo_membro.username}' adicionado ao grupo com sucesso.")
+            
+    return redirect('gerenciar_grupo', grupo_id=grupo_id)
+
+@usuario_obrigatorio
+def meus_grupos_administrados(request):
+    # Filtra os grupos onde o usuário logado é um dos administradores
+    grupos = Grupo.objects.filter(administradores=request.user).order_by('-data_criacao')
+    
+    return render(request, "meus_grupos.html", {'grupos': grupos})

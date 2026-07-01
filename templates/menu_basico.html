@@ -1,0 +1,11 @@
+
+<a class="navbar-brand" href="{% url 'cadastrar_receita' %}">Cadastrar Receita</a>
+<a class="navbar-brand" href="{% url 'cadastrar_grupo' %}">Criar Grupo</a>
+<a class="navbar-brand" href="{% url 'meus_grupos_administrados' %}">Gerenciar meus Grupos</a>
+{% if request.user.is_staff or request.user.grupos_administrados.exists %}
+   <a class="navbar-brand" href="{% url 'cadastrar' %}">Cadastrar Usuários</a>
+{% else %}
+    <a class="navbar-brand text-muted " href="#" tabindex="-1" aria-disabled="true">Cadastrar Usuários</a> 
+{% endif %}
+
+

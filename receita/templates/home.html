@@ -1,11 +1,6 @@
 {% extends 'base.html' %}
 {% block 'menu'%} 
-<a class="navbar-brand" href="{% url 'cadastrar_receita' %}">Cadastrar Receita</a>
-{% if request.user.is_staff or request.user.grupos_administrados.exists %}
-    <a class="navbar-brand" href="{% url 'cadastrar' %}">Cadastrar Usuários</a>
-{% else %}
-    <a class="navbar-brand text-muted " href="#" tabindex="-1" aria-disabled="true">Cadastrar Usuários</a>
-{% endif %}
+{% include 'menu_basico.html' %}
 {% endblock %}
 {% block 'conteudo' %}
 

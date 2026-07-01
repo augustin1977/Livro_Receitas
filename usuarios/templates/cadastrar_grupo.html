@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block 'titulo' %} Novo Grupo {% endblock %}
+{% block 'menu'%} 
+{% include 'menu_basico.html' %}
+{% endblock %}
+
+{% block 'conteudo' %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h5>Criar Novo Grupo / Família</h5>
+            <hr>
+            <form method="POST"> {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Nome do Grupo</label>
+                    <input name="nome" class="form-control" type="text" placeholder="Ex: Família Silva ou Cozinha Central" required>
+                </div>
+                
+                <p class="text-muted small">Ao criar o grupo, você será definido automaticamente como administrador dele e poderá incluir novos membros.</p>
+
+                <input class="btn btn-success" type="submit" value="Criar Grupo">
+                <a href="{% url 'home' %}" class="btn btn-warning">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

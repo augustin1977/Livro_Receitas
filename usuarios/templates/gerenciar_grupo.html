@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block 'titulo' %} Gerenciar Grupo {% endblock %}
+{% block 'menu'%} 
+{% include 'menu_basico.html' %}
+{% endblock %}
+
+{% block 'conteudo' %}
+<div class="container mt-4">
+    <h2>Grupo: {{ grupo.nome }}</h2>
+    <p class="text-muted small">Criado em: {{ grupo.data_creation|date:"d/m/Y" }}</p>
+    <hr>
+
+    <div class="row">
+        <div class="col-md-5 mb-4">
+            {% if request.user in grupo.administadores.all or request.user.is_staff %}
+                <div class="card p-3 shadow-sm bg-light">
+                    <h5>Convidar Membro</h5>
+                    <form method="POST" action="{% url 'adicionar_membro' grupo.id %}"> {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Nickname ou E-mail do Usuário</label>
+                            <input name="busca" class="form-control" type="text" placeholder="Ex: joao.silva ou joao@email.com" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">Incluir no Grupo</button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    Você é membro deste grupo. Apenas os administradores listados ao lado podem convidar novas pessoas.
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-7">
+            <h5>Membros Atuais</h5>
+            <ul class="list-group">
+                {% for membro in grupo.membros.all %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>{{ membro.first_name }} ({{ membro.username }})</span>
+                        
+                        <div>
+                            {% if membro in grupo.administadores.all %}
+                                <span class="badge bg-danger">Dono / Admin</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Membro</span>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
