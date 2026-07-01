@@ -20,7 +20,7 @@
     {% endif %}
     <form method ="POST" action="{% url 'validar_login'%}"> {% csrf_token %}  
         <label> Email </label>
-        <input name="email" class="form-control" type="text" placeholder="nome@servidor.com">
+        <input name="username" class="form-control" type="text" placeholder="Nome do usuário">
         <br>
         <label>  senha </label>
         <input name="senha" class="form-control" type="password" placeholder="">

@@ -7,12 +7,14 @@ class Tipo(models.Model):
     def __str__(self):
         return self.tipo
 class Usuario(AbstractUser):
-    """ Cria a classe usuario com todas as configurações de usuário"""
-    nome=models.CharField(max_length=50)
-    foto=models.ImageField(upload_to='perfis/', null=True, blank=True)
-    tipo = models.ForeignKey(Tipo,on_delete=models.DO_NOTHING,null=True, blank=True)
+    """Usa username nativo como login/nickname, email, first_name e last_name"""
+    foto = models.ImageField(upload_to='perfis/', null=True, blank=True)
+    tipo = models.ForeignKey(Tipo, on_delete=models.DO_NOTHING, null=True, blank=True)
+    
     def __str__(self):
-        return self.nome
+        # Retorna o primeiro nome se houver, senão o nickname de login
+        return self.username
+    
 class Grupo (models.Model):
     nome = models.CharField(max_length=100)
     # related_name permite buscar as famílias de um usuário usando usuario.familias.all()

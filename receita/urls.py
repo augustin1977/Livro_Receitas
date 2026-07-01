@@ -8,7 +8,7 @@ urlpatterns = [
     path("cadastrar_receita/", views.cadastrar_receita,name="cadastrar_receita"),
     path("cadastrar_unidade/", views.cadastrar_unidade),
     path("cadastrar_material/", views.cadastrar_material),
-    path("cadastrar_ingrediente/", views.cadastrar_ingrediente),
+    #path("cadastrar_ingrediente/", views.cadastrar_ingrediente),
     path("home/",views.home, name="home"),
     path("mostrar_receita/",views.mostrar_receita, name="mostrar_receita"),
     path('confirmar-exclusao/', views.confirmar_exclusao, name='confirmar_exclusao'),
