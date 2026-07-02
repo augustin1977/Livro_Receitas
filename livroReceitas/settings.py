@@ -28,6 +28,9 @@ DEBUG = sv.debug
 
 ALLOWED_HOSTS = ["web.ferrazaugustin.tec.br", "receitas.ferrazaugustin.tec.br", "192.168.0.11", "*"]
 
+# Diz ao Django que ele está atrás de um proxy reverso seguro
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 
