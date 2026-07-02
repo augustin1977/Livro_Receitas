@@ -2,8 +2,8 @@ from django.db import models
 from usuarios.models import Usuario
 
 class Unidade(models.Model):
-    simbolo = models.CharField(max_length=10) # Ex: kg, g, ml
-    unidades = models.CharField(max_length=50) # Ex: Quilograma, Grama
+
+    unidades = models.CharField(max_length=60) # Ex: Quilograma, Grama
     
     def __str__(self):
         return self.unidades

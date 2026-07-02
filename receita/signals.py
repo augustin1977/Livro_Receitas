@@ -14,25 +14,25 @@ def popular_dados_sempre(sender, **kwargs):
     # 1. Lista de Unidades
     print("Carregando unidades basicas de culinária.")
     unidades_dados = [
-        ('g', 'Grama'),
-        ('kg', 'Quilograma'),
-        ('ml', 'Mililitro'),
-        ('l', 'Litro'),
-        ('un', 'Unidade'),
-        ('xic. chá', 'Xícara de Chá'),
-        ('c. sopa', 'Colher de Sopa'),
-        ('c. chá', 'Colher de Chá'),
-        ('c. café', 'Colher de Café'),
-        ('pitada','Pitada'),
-        ('a gosto','a Gosto'),
+        'Grama',
+        'Quilograma',
+        'Mililitro',
+        'Litro',
+        'Unidade',
+        'Xícara de chá',
+        'Colher de sopa',
+        'Colher de chá',
+        'Colher de café',
+        'Pitada',
+        'a Gosto',
+        "Copo",
+        "Lata",
     ]
 
-    unidades_objetos = {}
-    for simbolo, nome in unidades_dados:
+    for unidades in unidades_dados:
         # O get_or_create garante que só insere se não existir
-        unidade_obj, _ = Unidade.objects.get_or_create(simbolo=simbolo, defaults={'unidades': nome})
-        unidades_objetos[simbolo] = unidade_obj
-        print (f"unidade  {nome} : {simbolo} Criada com sucesso")
+        Unidade.objects.get_or_create(unidades=unidades.capitalize())
+        print (f"unidade {unidades} Criada com sucesso")
     print ("Unidades de medida cadastrados com sucesso!")
     # 2. Lista de Materiais
     print("Carregando ingredientes basicos.")
@@ -74,6 +74,6 @@ def popular_dados_sempre(sender, **kwargs):
     ]
 
     for nome in materiais_dados:
-        Material.objects.get_or_create(nome=nome)
+        Material.objects.get_or_create(nome=nome.capitalize())
         print (f"Ingrediente {nome} cadastrado com com sucesso")
     print ("Ingedientes cadastrados com sucesso")

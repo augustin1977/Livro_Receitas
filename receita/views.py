@@ -7,24 +7,59 @@ from autentica import *
 from django.db.models import Prefetch
 from django.contrib import messages 
 from decimal import Decimal
+from django.db.models.functions import Lower
 @usuario_obrigatorio
 def cadastrar_receita(request):
-    materiais = Material.objects.all().order_by('nome')
-    unidades = Unidade.objects.all().order_by('unidades')
+    materiais = Material.objects.all().order_by(Lower( 'nome'))
+    unidades = Unidade.objects.all().order_by(Lower('unidades'))
     
     context = {
         'materiais': materiais,
         'unidades': unidades
     }
     return render(request, "cadastroReceita.html", context)
-@usuario_obrigatorio
-def cadastrar_unidade(request):
- 
-    return HttpResponse("Cadastro Unidade")
-@usuario_obrigatorio
-def cadastrar_material(request):
 
-    return HttpResponse("Cadastro Material")
+def gerenciar_unidades(request):
+    if request.method == 'POST':
+        nome = request.POST.get('nome_unidade')
+        if nome:
+            Unidade.objects.create(unidades=nome.capitalize())
+        return redirect('gerenciar_unidades')
+
+    unidades = Unidade.objects.all().order_by(Lower('unidades'))
+    return render(request, 'gerenciar_unidades.html', {'unidades': unidades})
+
+# View de Edição
+def editar_unidade(request, pk):
+    try :
+        unidade = Unidade.objects.get(pk=pk)
+    except:
+        messages.error(request, "Unidade não existe")
+        redirect("gerenciar_unidades")
+    
+    if request.method == 'POST':
+        nome = request.POST.get('nome_unidade')
+        if nome:
+            unidade.unidades = nome.capitalize()
+            unidade.save()
+        return redirect('gerenciar_unidades')
+        
+    unidades = Unidade.objects.all().order_by(Lower('unidades'))
+    return render(request, 'gerenciar_unidades.html', {
+        'unidades': unidades,
+        'unidade_editando': unidade
+    })
+
+# View de Exclusão
+def excluir_unidade(request, pk):
+    try :
+        unidade = Unidade.objects.get(pk=pk)
+    except:
+        messages.error(request, "Unidade não existe")
+        redirect("gerenciar_unidades")
+    unidade.delete()
+    return redirect('gerenciar_unidades')
+
 
 @usuario_obrigatorio
 def valida_cadastro_material(request):
