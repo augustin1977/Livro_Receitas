@@ -30,13 +30,13 @@
             {% endif %}
         </div>
 
-        <div class="col-md-7">
+<div class="col-md-7">
     <h5>Membros Atuais</h5>
     <table class="table table-hover align-middle">
         <thead>
             <tr>
                 {% if request.user in grupo.administradores.all or request.user.is_staff %}
-                    <th scope="col" style="width: 50px;">Ações</th>
+                    <th scope="col" style="width: 90px;">Ações</th>
                 {% endif %}
                 <th scope="col">Membro</th>
                 <th scope="col">Nível</th>
@@ -47,16 +47,32 @@
             <tr>
                 {% if request.user in grupo.administradores.all or request.user.is_staff %}
                     <td>
-                        {% if membro != request.user %}
-                            <a href="{% url 'remover_membro' grupo.id membro.id %}" 
-                               class="btn btn-sm btn-outline-danger" 
-                               title="Remover do Grupo" 
-                               onclick="return confirm('Deseja mesmo remover {{ membro.username }} deste grupo?');">
-                                <i class="bi bi-trash"></i>
-                            </a>
-                        {% else %}
-                            <span class="text-muted small">-</span>
-                        {% endif %}
+                        <div class="d-flex gap-1">
+                            {% if membro not in grupo.administradores.all %}
+                                <a href="{% url 'promover_administrador' grupo.id membro.id %}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   title="Promover a Administrador"
+                                   onclick="return confirm('Deseja dar permissões de administrador para {{ membro.username }}?');">
+                                    <i class="bi bi-shield-check"></i>
+                                </a>
+                            {% else %}
+                                <a href="{% url 'revogar_administrador' grupo.id membro.id %}" 
+                                   class="btn btn-sm btn-outline-danger text-dark" 
+                                   title="Revogar Privilégios de Admin"
+                                   onclick="return confirm('Deseja remover as permissões de administrador de {{ membro.username }}?')">
+                                    <i class="bi bi-shield-slash-fill"></i>
+                                </a>
+                            {% endif %}
+                            
+                            {% if membro != request.user %}
+                                <a href="{% url 'remover_membro' grupo.id membro.id %}" 
+                                   class="btn btn-sm btn-outline-danger" 
+                                   title="Remover do Grupo" 
+                                   onclick="return confirm('Deseja mesmo remover {{ membro.username }} deste grupo?');">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            {% endif %}
+                        </div>
                     </td>
                 {% endif %}
                 

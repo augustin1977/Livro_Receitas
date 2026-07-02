@@ -237,13 +237,45 @@ def responder_convite(request, convite_id, acao):
     # Apaga o convite do banco após processar a decisão
     convite.delete()
     return redirect('meus_convites')
+
 @usuario_obrigatorio
 def meus_grupos_administrados(request):
-    # Filtra os grupos onde o usuário logado é um dos administradores
-    grupos = Grupo.objects.filter(administradores=request.user).order_by('-data_criacao')
-    
+    # Traz todos os grupos em que o usuário está na lista de membros (seja admin ou comum)
+    grupos = Grupo.objects.filter(membros=request.user).distinct().order_by('nome')
     return render(request, "meus_grupos.html", {'grupos': grupos})
 
+@usuario_obrigatorio
+def sair_do_grupo(request, grupo_id):
+    try:
+        grupo = Grupo.objects.get(id=grupo_id)
+    except Exception:
+        messages.error(request, "Erro ao acessar o grupo desejado.")
+        return redirect('meus_grupos_administrados')
+
+    # Se o usuário não estiver no grupo, não há o que fazer
+    if request.user not in grupo.membros.all():
+        messages.error(request, "Você não faz parte deste grupo.")
+        return redirect('meus_grupos_administrados')
+
+    # REGRA DE SEGURANÇA: Se ele for administrador, precisamos checar se o grupo não vai ficar órfão
+    if request.user in grupo.administradores.all() and grupo.administradores.count() <= 1:
+        # Se houver mais membros, ele precisa promover alguém antes de sair
+        if grupo.membros.count() > 1:
+            messages.error(request, "Você é o único administrador deste grupo. Promova outro membro a administrador antes de sair.")
+            return redirect('gerenciar_grupo', grupo_id=grupo.id)
+        # Se ele for o único membro do grupo inteiro, o grupo será deletado automaticamente ao sair
+        else:
+            grupo.delete()
+            messages.success(request, f"Você saiu e o grupo '{grupo.nome}' foi desfeito por estar vazio.")
+            return redirect('meus_grupos_administrados')
+
+    # Fluxo normal: remove dos membros e dos administradores (caso fosse um)
+    grupo.membros.remove(request.user)
+    if request.user in grupo.administradores.all():
+        grupo.administradores.remove(request.user)
+
+    messages.success(request, f"Você saiu do grupo '{grupo.nome}' com sucesso.")
+    return redirect('meus_grupos_administrados')
 @usuario_obrigatorio
 def remover_membro(request, grupo_id, usuario_id):
     # Tratamento de erro customizado sem telas de erro técnicas do Django
@@ -271,3 +303,90 @@ def remover_membro(request, grupo_id, usuario_id):
 
     messages.success(request, f"Usuário '{usuario_alvo.username}' foi removido do grupo.")
     return redirect('gerenciar_grupo', grupo_id=grupo.id)
+@usuario_obrigatorio
+def promover_administrador(request, grupo_id, usuario_id):
+    try:
+        grupo = Grupo.objects.get(id=grupo_id)
+        usuario_alvo = Usuario.objects.get(id=usuario_id)
+    except Exception:
+        messages.error(request, "Erro ao acessar o grupo ou usuário desejado.")
+        return redirect('meus_grupos_administrados')
+
+    # Trava de segurança: apenas administradores do grupo ou admin geral podem promover
+    if request.user not in grupo.administradores.all() and not request.user.is_staff:
+        messages.error(request, "Você não tem permissão para promover membros deste grupo.")
+        return redirect('gerenciar_grupo', grupo_id=grupo.id)
+
+    # O usuário alvo precisa ser membro do grupo para virar admin
+    if usuario_alvo not in grupo.membros.all():
+        messages.error(request, "O usuário precisa ser membro do grupo antes de se tornar administrador.")
+        return redirect('gerenciar_grupo', grupo_id=grupo.id)
+
+    # Verifica se ele já é admin
+    if usuario_alvo in grupo.administradores.all():
+        messages.warning(request, f"'{usuario_alvo.username}' já é um administrador deste grupo.")
+        return redirect('gerenciar_grupo', grupo_id=grupo.id)
+
+    # Adiciona à lista de administradores
+    grupo.administradores.add(usuario_alvo)
+
+    messages.success(request, f"Usuário '{usuario_alvo.username}' agora também é administrador do grupo!")
+    return redirect('gerenciar_grupo', grupo_id=grupo.id)
+@usuario_obrigatorio
+def revogar_administrador(request, grupo_id, usuario_id):
+    try:
+        grupo = Grupo.objects.get(id=grupo_id)
+        usuario_alvo = Usuario.objects.get(id=usuario_id)
+    except Exception:
+        messages.error(request, "Erro ao acessar o grupo ou usuário desejado.")
+        return redirect('meus_grupos_administrados')
+
+    # Trava de segurança: apenas administradores do grupo ou admin geral podem revogar
+    if request.user not in grupo.administradores.all() and not request.user.is_staff:
+        messages.error(request, "Você não tem permissão para alterar privilégios neste grupo.")
+        return redirect('gerenciar_grupo', grupo_id=grupo.id)
+
+    # Verifica se o usuário alvo realmente é um administrador do grupo
+    if usuario_alvo not in grupo.administradores.all():
+        messages.warning(request, f"'{usuario_alvo.username}' não é um administrador deste grupo.")
+        return redirect('gerenciar_grupo', grupo_id=grupo.id)
+
+    # REGRA CRÍTICA: Impede que o grupo fique sem nenhum administrador
+    if grupo.administradores.count() <= 1:
+        messages.error(request, "O grupo deve ter pelo menos um administrador. Promova outro membro antes de revogar este acesso.")
+        return redirect('gerenciar_grupo', grupo_id=grupo.id)
+
+    # Remove da lista de administradores (mas ele continua sendo membro comum do grupo)
+    grupo.administradores.remove(usuario_alvo)
+
+    messages.success(request, f"Os privilégios de administrador de '{usuario_alvo.username}' foram revogados.")
+    
+    # Se o usuário logado revogou a si mesmo, ele perde o acesso de gestão e deve ser jogado para a lista de grupos dele
+    if usuario_alvo == request.user:
+        return redirect('meus_grupos_administrados')
+        
+    return redirect('gerenciar_grupo', grupo_id=grupo.id)
+@usuario_obrigatorio
+def excluir_grupo(request, grupo_id):
+    try:
+        grupo = Grupo.objects.get(id=grupo_id)
+    except Exception:
+        messages.error(request, "Erro ao acessar o grupo desejado.")
+        return redirect('meus_grupos_administrados')
+
+    # Trava de segurança: apenas quem está na lista de administradores do grupo ou admin geral pode deletar
+    if request.user not in grupo.administradores.all() and not request.user.is_staff:
+        messages.error(request, "Você não tem permissão para excluir este grupo.")
+        return redirect('meus_grupos_administrados')
+
+    nome_grupo = grupo.nome
+    
+    # Remove todos os vínculos de membros e administradores antes de apagar (boa prática do Django)
+    grupo.membros.clear()
+    grupo.administradores.clear()
+    
+    # Deleta o grupo definitivamente
+    grupo.delete()
+
+    messages.success(request, f"O grupo '{nome_grupo}' foi excluído permanentemente.")
+    return redirect('meus_grupos_administrados')

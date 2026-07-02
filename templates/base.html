@@ -18,7 +18,11 @@
     <nav class="navbar navbar-dark bg-dark">
         <a class="navbar-brand" href="{% url 'home' %}">Livro de Receitas</a>
         {% block 'menu' %} {% endblock %}
-        <a class="navbar-brand" href="{% url 'sair' %}">Sair</a>
+        {% if  user.username  %}
+        <a class="navbar-brand" href="{% url 'sair' %}">Sair de {{ user.username }}</a>
+        {% else %}
+        <a class="navbar-brand" href="{% url 'sair' %}">Sair </a>
+        {% endif %}
       
       </nav>
       {# BLOCO DE MENSAGENS DO DJANGO #}

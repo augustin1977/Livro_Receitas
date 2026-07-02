@@ -6,16 +6,16 @@
 {% block 'conteudo' %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>Grupos que Eu Administro</h3>
+        <h3>Meus Grupos e Famílias</h3>
         <a class="btn btn-success btn-sm" href="{% url 'cadastrar_grupo' %}">+ Criar Novo Grupo</a>
     </div>
     
     {% if grupos %}
-        <table class="table table-hover mb-5">
+        <table class="table table-hover align-middle mb-5">
             <thead>
               <tr>
                 <th scope="col">Nome do Grupo / Família</th>
-                <th scope="col">Data de Criação</th>
+                <th scope="col">Seu Nível</th>
                 <th scope="col" class="text-center">Total de Membros</th>
                 <th scope="col" class="text-center">Ações</th>
               </tr>
@@ -24,12 +24,35 @@
                 {% for grupo in grupos %}
                 <tr>
                     <th>{{ grupo.nome }}</th>
-                    <td>{{ grupo.data_criacao|date:"d/m/Y" }}</td>
-                    <td class="text-center"> {{ grupo.membros.count }}  </td>
+                    <td>
+                        {% if request.user in grupo.administradores.all %}
+                            <span class="text-danger font-monospace small">Administrador</span>
+                        {% else %}
+                            <span class="text-muted font-monospace small">Membro</span>
+                        {% endif %}
+                    </td>
                     <td class="text-center">
-                        <a href="{% url 'gerenciar_grupo' grupo.id %}" class="btn btn-sm btn-outline-primary">
-                            Gerenciar Membros
-                        </a>
+                        <span class="badge bg-secondary">{{ grupo.membros.count }}</span>
+                    </td>
+                    <td class="text-center">
+                        {% if request.user in grupo.administradores.all or request.user.is_staff %}
+                            <a href="{% url 'gerenciar_grupo' grupo.id %}" class="btn btn-sm btn-outline-primary me-1">
+                                Gerenciar Membros
+                            </a>
+                            <a href="{% url 'excluir_grupo' grupo.id %}" 
+                               class="btn btn-sm btn-outline-danger" 
+                               title="Excluir Grupo" 
+                               onclick="return confirm('Deseja mesmo excluir o grupo {{ grupo.nome }} permanentemente?');">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'sair_do_grupo' grupo.id %}" 
+                               class="btn btn-sm btn-outline-warning text-dark" 
+                               title="Sair do Grupo"
+                               onclick="return confirm('Tem certeza que deseja sair do grupo {{ grupo.nome }}? Você perderá o acesso às receitas dele.');">
+                                Sair do Grupo
+                            </a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -37,7 +60,7 @@
         </table>
     {% else %}
         <div class="alert alert-info mt-4" role="alert">
-            Você ainda não administra nenhum grupo. Que tal <a href="{% url 'cadastrar_grupo' %}" class="alert-link">criar um agora</a>?
+            Você não participa de nenhum grupo no momento. Que tal <a href="{% url 'cadastrar_grupo' %}" class="alert-link">criar um agora</a>?
         </div>
     {% endif %}
 </div>
