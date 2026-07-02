@@ -26,7 +26,7 @@ SECRET_KEY = sv.secret_key
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = sv.debug
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["web.ferrazaugustin.tec.br", "receitas.ferrazaugustin.tec.br"]
 
 
 # Application definition
