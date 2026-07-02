@@ -18,7 +18,7 @@ def cadastrar_receita(request):
         'unidades': unidades
     }
     return render(request, "cadastroReceita.html", context)
-
+@usuario_obrigatorio
 def gerenciar_unidades(request):
     if request.method == 'POST':
         nome = request.POST.get('nome_unidade')
@@ -29,7 +29,7 @@ def gerenciar_unidades(request):
     unidades = Unidade.objects.all().order_by(Lower('unidades'))
     return render(request, 'gerenciar_unidades.html', {'unidades': unidades})
 
-# View de Edição
+@usuario_obrigatorio
 def editar_unidade(request, pk):
     try :
         unidade = Unidade.objects.get(pk=pk)
@@ -50,7 +50,7 @@ def editar_unidade(request, pk):
         'unidade_editando': unidade
     })
 
-# View de Exclusão
+@usuario_obrigatorio
 def excluir_unidade(request, pk):
     try :
         unidade = Unidade.objects.get(pk=pk)
@@ -282,7 +282,7 @@ def editar_receita(request):
         'unidades': unidades,
     }
     return render(request, "editar_receita.html", context)
-
+@usuario_obrigatorio
 def gerenciar_ingredientes(request):
     if request.method == 'POST':
         nome = request.POST.get('nome_ingrediente')
@@ -293,7 +293,7 @@ def gerenciar_ingredientes(request):
     ingredientes = Material.objects.all().order_by(Lower('nome'))
     return render(request, 'gerenciar_ingredientes.html', {'ingredientes': ingredientes})
 
-# View de Edição
+@usuario_obrigatorio
 def editar_ingrediente(request, pk):
     try :
         ingrediente = Material.objects.get(pk=pk)
@@ -314,7 +314,7 @@ def editar_ingrediente(request, pk):
         'ingrediente_editando': ingrediente
     })
 
-# View de Exclusão
+@usuario_obrigatorio
 def excluir_ingrediente(request, pk):
     try :
         ingrediente = Material.objects.get(pk=pk)

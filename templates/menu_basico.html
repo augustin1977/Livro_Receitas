@@ -1,21 +1,47 @@
+<ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-<<a class="navbar-brand" href="{% url 'gerenciar_unidades' %}">Gerenciar Unidades</a>
-<<a class="navbar-brand" href="{% url 'gerenciar_ingredientes' %}">Gerenciar Ingredientes</a>
-<a class="navbar-brand" href="{% url 'cadastrar_receita' %}">Cadastrar Receita</a>
-<a class="navbar-brand" href="{% url 'cadastrar_grupo' %}">Criar Grupo</a>
-<a class="navbar-brand" href="{% url 'meus_grupos_administrados' %}">Gerenciar meus Grupos</a>
-<a class="navbar-brand" href="{% url 'meus_convites' %}">
-    Convites 
-    {% if total_convites > 0 %}
-        <span class="badge bg-warning text-dark font-monospace" style="font-size: 0.75rem;">
-            {{ total_convites }}
+  <li class="nav-item dropdown">
+    <a class="nav-link text-light dropdown-toggle" href="#" id="navbarDropdownCadastros" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+      Cadastros
+    </a>
+    <div class="dropdown-menu dropdown-menu-dark bg-dark" aria-labelledby="navbarDropdownCadastros">
+      <a class="dropdown-item text-light" href="{% url 'cadastrar_receita' %}">Cadastrar Receita</a>
+      <hr class="dropdown-divider border-secondary">
+      <a class="dropdown-item text-light" href="{% url 'gerenciar_ingredientes' %}">Gerenciar Ingredientes</a>
+      <a class="dropdown-item text-light" href="{% url 'gerenciar_unidades' %}">Gerenciar Unidades</a>
+    </div>
+  </li>
+
+  <li class="nav-item dropdown">
+    <a class="nav-link text-light dropdown-toggle" href="#" id="navbarDropdownGrupos" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+      Grupos
+    </a>
+    <div class="dropdown-menu dropdown-menu-dark bg-dark" aria-labelledby="navbarDropdownGrupos">
+      <a class="dropdown-item text-light" href="{% url 'cadastrar_grupo' %}">Criar Grupo</a>
+      <a class="dropdown-item text-light" href="{% url 'meus_grupos_administrados' %}">Gerenciar meus Grupos</a>
+    </div>
+  </li>
+
+  <li class="nav-item">
+    <a class="nav-link text-light position-relative" href="{% url 'meus_convites' %}">
+      Convites
+      {% if total_convites > 0 %}
+        <span class="badge bg-warning text-dark font-monospace align-middle ms-1" style="font-size: 0.75rem;">
+          {{ total_convites }}
         </span>
-    {% endif %}
-</a>
-{% if request.user.is_staff %}
-   <a class="navbar-brand" href="{% url 'cadastrar' %}">Cadastrar Usuários</a>
-{% comment %} {% else %}
-    <a class="navbar-brand text-muted " href="#" tabindex="-1" aria-disabled="true">Cadastrar Usuários</a>  {% endcomment %}
-{% endif %}
+      {% endif %}
+    </a>
+  </li>
 
+  {% if request.user.is_staff %}
+  <li class="nav-item dropdown">
+    <a class="nav-link text-light dropdown-toggle" href="#" id="navbarDropdownUsuarios" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+      Administração
+    </a>
+    <div class="dropdown-menu dropdown-menu-dark bg-dark" aria-labelledby="navbarDropdownUsuarios">
+      <a class="dropdown-item text-light" href="{% url 'cadastrar' %}">Cadastrar Usuários</a>
+    </div>
+  </li>
+  {% endif %}
 
+</ul>
