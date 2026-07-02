@@ -282,3 +282,45 @@ def editar_receita(request):
         'unidades': unidades,
     }
     return render(request, "editar_receita.html", context)
+
+def gerenciar_ingredientes(request):
+    if request.method == 'POST':
+        nome = request.POST.get('nome_ingrediente')
+        if nome:
+            Material.objects.create(nome=nome.capitalize())
+        return redirect('gerenciar_ingredientes')
+
+    ingredientes = Material.objects.all().order_by(Lower('nome'))
+    return render(request, 'gerenciar_ingredientes.html', {'ingredientes': ingredientes})
+
+# View de Edição
+def editar_ingrediente(request, pk):
+    try :
+        ingrediente = Material.objects.get(pk=pk)
+    except:
+        messages.error(request, "Ingrediente não existe")
+        return redirect("gerenciar_ingredientes")
+    print(ingrediente)  
+    if request.method == 'POST':
+        nome = request.POST.get('nome_ingrediente')
+        if nome:
+            ingrediente.nome = nome.capitalize()
+            ingrediente.save()
+        return redirect('gerenciar_ingredientes')
+        
+    ingredientes = Material.objects.all().order_by(Lower('nome'))
+    return render(request, 'gerenciar_ingredientes.html', {
+        'ingredientes': ingredientes,
+        'ingrediente_editando': ingrediente
+    })
+
+# View de Exclusão
+def excluir_ingrediente(request, pk):
+    try :
+        ingrediente = Material.objects.get(pk=pk)
+    except:
+        messages.error(request, "Ingrediente não existe")
+        return redirect("gerenciar_ingredientes")
+    
+    ingrediente.delete()
+    return redirect('gerenciar_ingredientes')

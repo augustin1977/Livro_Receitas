@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block 'titulo' %} Gerenciar Ingredientes {% endblock %}
+
+{% block 'menu'%} 
+{% include 'menu_basico.html' %}
+{% endblock %}
+
+{% block 'conteudo' %} 
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-4">Gerenciar Ingredientes (Materiais)</h3>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">{% if ingrediente_editando %}Editar Ingrediente{% else %}Novo Ingrediente{% endif %}</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{% if ingrediente_editando %}{% url 'editar_ingrediente' ingrediente_editando.id %}{% else %}{% url 'gerenciar_ingredientes' %}{% endif %}" class="row g-3 align-items-center">
+                {% csrf_token %}
+                <div class="col-sm-6">
+                    <input type="text" class="form-control" name="nome_ingrediente" value="{{ ingrediente_editando.nome|default:'' }}" placeholder="Ex: Açúcar, Farinha de Trigo" required>
+                </div>
+                <div class="col-sm-6">
+                    <button type="submit" class="btn btn-success me-2">Salvar</button>
+                    {% if ingrediente_editando %}
+                        <a href="{% url 'gerenciar_ingredientes' %}" class="btn btn-secondary">Cancelar</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Ingredientes Cadastrados</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="ps-4">Nome do Ingrediente</th>
+                            <th class="text-end pe-4">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ingrediente in ingredientes %}
+                        <tr>
+                            <td class="align-middle ps-4">{{ ingrediente.nome }}</td>
+                            <td class="text-end align-middle pe-4">
+                                <a href="{% url 'editar_ingrediente' ingrediente.id %}" class="btn btn-sm btn-primary me-1">Editar</a>
+                                <a href="{% url 'excluir_ingrediente' ingrediente.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir este ingrediente?');">Excluir</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center text-muted p-4">Nenhum ingrediente cadastrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

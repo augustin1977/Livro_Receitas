@@ -14,4 +14,7 @@ urlpatterns = [
     path('confirmar-exclusao/', views.confirmar_exclusao, name='confirmar_exclusao'),
     path('excluir-receita/', views.excluir_receita, name='excluir_receita'),
     path('editar/', views.editar_receita, name='editar_receita'),
+    path('ingredientes/', views.gerenciar_ingredientes, name='gerenciar_ingredientes'),
+    path('ingredientes/editar/<int:pk>/', views.editar_ingrediente, name='editar_ingrediente'),
+    path('ingredientes/excluir/<int:pk>/', views.excluir_ingrediente, name='excluir_ingrediente'),
 ]
