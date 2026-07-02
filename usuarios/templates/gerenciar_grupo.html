@@ -12,7 +12,7 @@
 
     <div class="row">
         <div class="col-md-5 mb-4">
-            {% if request.user in grupo.administadores.all or request.user.is_staff %}
+            {% if request.user in grupo.administradores.all %}
                 <div class="card p-3 shadow-sm bg-light">
                     <h5>Convidar Membro</h5>
                     <form method="POST" action="{% url 'adicionar_membro' grupo.id %}"> {% csrf_token %}
@@ -57,7 +57,7 @@
                                 </a>
                             {% else %}
                                 <a href="{% url 'revogar_administrador' grupo.id membro.id %}" 
-                                   class="btn btn-sm btn-outline-danger text-dark" 
+                                   class="btn btn-sm btn-outline-warning" 
                                    title="Revogar Privilégios de Admin"
                                    onclick="return confirm('Deseja remover as permissões de administrador de {{ membro.username }}?')">
                                     <i class="bi bi-shield-slash-fill"></i>

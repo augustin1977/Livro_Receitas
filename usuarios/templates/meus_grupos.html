@@ -26,18 +26,18 @@
                     <th>{{ grupo.nome }}</th>
                     <td>
                         {% if request.user in grupo.administradores.all %}
-                            <span class="text-danger font-monospace small">Administrador</span>
+                            <span class="text-primary font-monospace small">Administrador</span>
                         {% else %}
                             <span class="text-muted font-monospace small">Membro</span>
                         {% endif %}
                     </td>
                     <td class="text-center">
-                        <span class="badge bg-secondary">{{ grupo.membros.count }}</span>
+                        {{ grupo.membros.count }}
                     </td>
                     <td class="text-center">
                         {% if request.user in grupo.administradores.all or request.user.is_staff %}
                             <a href="{% url 'gerenciar_grupo' grupo.id %}" class="btn btn-sm btn-outline-primary me-1">
-                                Gerenciar Membros
+                               Membros
                             </a>
                             <a href="{% url 'excluir_grupo' grupo.id %}" 
                                class="btn btn-sm btn-outline-danger" 
@@ -47,10 +47,10 @@
                             </a>
                         {% else %}
                             <a href="{% url 'sair_do_grupo' grupo.id %}" 
-                               class="btn btn-sm btn-outline-warning text-dark" 
+                               class="btn btn-sm btn-outline-danger text-dark" 
                                title="Sair do Grupo"
                                onclick="return confirm('Tem certeza que deseja sair do grupo {{ grupo.nome }}? Você perderá o acesso às receitas dele.');">
-                                Sair do Grupo
+                               <i class="bi bi-door-open"></i><i class="bi bi-arrow-left"></i>
                             </a>
                         {% endif %}
                     </td>

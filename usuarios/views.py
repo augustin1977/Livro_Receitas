@@ -303,6 +303,7 @@ def remover_membro(request, grupo_id, usuario_id):
 
     messages.success(request, f"Usuário '{usuario_alvo.username}' foi removido do grupo.")
     return redirect('gerenciar_grupo', grupo_id=grupo.id)
+
 @usuario_obrigatorio
 def promover_administrador(request, grupo_id, usuario_id):
     try:
