@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block 'titulo' %} Convites de Grupo {% endblock %}
+
+{% block 'conteudo' %}
+<div class="container mt-4 mb-5">
+    <h3>Convites para Entrar em Grupos</h3>
+    <p class="text-muted small">Você só fará parte do grupo e compartilhará suas receitas após aceitar o convite.</p>
+    <hr>
+
+    {% if convites %}
+        <div class="row">
+            <div class="col-md-8">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-center" style="width: 150px;">Ações</th>
+                            <th scope="col">Grupo / Família</th>
+                            <th scope="col">Data do Convite</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for convite in convites %}
+                        <tr>
+                            <td class="text-center">
+                                <a href="{% url 'responder_convite' convite.id 'aceitar' %}" class="btn btn-sm btn-success me-1" title="Aceitar">
+                                    ✓ Aceitar
+                                </a>
+                                <a href="{% url 'responder_convite' convite.id 'recusar' %}" class="btn btn-sm btn-outline-danger" title="Recusar" onclick="return confirm('Deseja recusar o convite?');">
+                                    ✕
+                                </a>
+                            </td>
+                            <td>
+                                <strong>{{ convite.grupo.nome }}</strong>
+                            </td>
+                            <td>{{ convite.data_envio|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-light border mt-4" role="alert">
+            Você não tem nenhum convite pendente no momento.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -23,3 +23,11 @@ class Grupo (models.Model):
     data_criacao = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return self.nome
+
+class ConviteGrupo(models.Model):
+    grupo = models.ForeignKey(Grupo, on_delete=models.CASCADE, related_name='convites_pendentes')
+    usuario_convidado = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='convites_recebidos')
+    data_envio = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Convite de {self.grupo.nome} para {self.usuario_convidado.username}"

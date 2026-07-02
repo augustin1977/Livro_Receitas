@@ -25,9 +25,7 @@
                 <tr>
                     <th>{{ grupo.nome }}</th>
                     <td>{{ grupo.data_criacao|date:"d/m/Y" }}</td>
-                    <td class="text-center">
-                        <span class="badge bg-secondary">{{ grupo.membros.count }}</span>
-                    </td>
+                    <td class="text-center"> {{ grupo.membros.count }}  </td>
                     <td class="text-center">
                         <a href="{% url 'gerenciar_grupo' grupo.id %}" class="btn btn-sm btn-outline-primary">
                             Gerenciar Membros

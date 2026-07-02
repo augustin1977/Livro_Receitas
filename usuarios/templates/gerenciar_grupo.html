@@ -31,23 +31,51 @@
         </div>
 
         <div class="col-md-7">
-            <h5>Membros Atuais</h5>
-            <ul class="list-group">
-                {% for membro in grupo.membros.all %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>{{ membro.first_name }} ({{ membro.username }})</span>
-                        
-                        <div>
-                            {% if membro in grupo.administadores.all %}
-                                <span class="badge bg-danger">Dono / Admin</span>
-                            {% else %}
-                                <span class="badge bg-secondary">Membro</span>
-                            {% endif %}
-                        </div>
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
+    <h5>Membros Atuais</h5>
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                {% if request.user in grupo.administradores.all or request.user.is_staff %}
+                    <th scope="col" style="width: 50px;">Ações</th>
+                {% endif %}
+                <th scope="col">Membro</th>
+                <th scope="col">Nível</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for membro in grupo.membros.all %}
+            <tr>
+                {% if request.user in grupo.administradores.all or request.user.is_staff %}
+                    <td>
+                        {% if membro != request.user %}
+                            <a href="{% url 'remover_membro' grupo.id membro.id %}" 
+                               class="btn btn-sm btn-outline-danger" 
+                               title="Remover do Grupo" 
+                               onclick="return confirm('Deseja mesmo remover {{ membro.username }} deste grupo?');">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        {% else %}
+                            <span class="text-muted small">-</span>
+                        {% endif %}
+                    </td>
+                {% endif %}
+                
+                <td>
+                    <strong>{{ membro.first_name }} {{ membro.last_name }}</strong> <br>
+                    <span class="text-muted small">@{{ membro.username }}</span>
+                </td>
+                
+                <td>
+                    {% if membro in grupo.administradores.all %}
+                        <span class="badge bg-danger">Dono / Admin</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Membro</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 </div>
 {% endblock %}

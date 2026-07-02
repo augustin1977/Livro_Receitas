@@ -13,4 +13,8 @@ urlpatterns = [
     path('grupo/gerenciar/<int:grupo_id>/', views.gerenciar_grupo, name='gerenciar_grupo'),
     path('grupo/adicionar-membro/<int:grupo_id>/', views.adicionar_membro, name='adicionar_membro'),
     path('grupo/meus-grupos/', views.meus_grupos_administrados, name='meus_grupos_administrados'),
+    path('grupo/<int:grupo_id>/remover-membro/<int:usuario_id>/', views.remover_membro, name='remover_membro'),
+    path('grupo/adicionar-membro/<int:grupo_id>/', views.adicionar_membro, name='adicionar_membro'),
+    path('grupo/convites/', views.meus_convites, name='meus_convites'),
+    path('grupo/convites/responder/<int:convite_id>/<str:acao>/', views.responder_convite, name='responder_convite'),
 ]

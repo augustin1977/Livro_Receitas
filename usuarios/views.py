@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
-from .models import Usuario,Tipo,Grupo
+from .models import *
 from django.shortcuts import redirect 
 from hashlib import sha256
 from django.contrib.auth import authenticate
@@ -160,57 +160,114 @@ def cadastrar_grupo(request):
 @usuario_obrigatorio
 def gerenciar_grupo(request, grupo_id):
     try:
-        grupo = Grupo.objects.get( id=grupo_id)
-        print(grupo)
+        grupo = Grupo.objects.get(id=grupo_id)
     except:
         messages.error(request, "Erro ao acessar o grupo desejado.")
-        return redirect('/receita/home/')
+        return redirect('meus_grupos_administrados')
     
     # Trava de segurança: apenas membros ou administradores gerais podem ver o grupo
-    if request.user not in grupo.membros.all() and not request.user.is_staff:
+    if request.user not in grupo.membros.all(): # and not request.user.is_staff:
         messages.error(request, "Você não tem permissão para acessar este grupo.")
-        return redirect('/receita/home/')
+        return redirect('meus_grupos_administrados')
         
     return render(request, "gerenciar_grupo.html", {'grupo': grupo})
 
 @usuario_obrigatorio
 def adicionar_membro(request, grupo_id):
-    if request.method == "POST":
-        try:
-            grupo = Grupo.objects.get(id=grupo_id)
-        except Exception as e:
-            messages.error(request, f"Erro ao acessar o grupo desejado.")
-            return redirect('/receita/home/')
+    if request.method != "POST":
+        return redirect('meus_grupos_administrados')
+        
+    try:
+        grupo = Grupo.objects.get(id=grupo_id)
+    except Exception:
+        messages.error(request, "Grupo não encontrado.")
+        return redirect('meus_grupos_administrados')
+        
+    # Trava de segurança: apenas administradores do grupo ou admin geral
+    if request.user not in grupo.administradores.all() and not request.user.is_staff:
+        messages.error(request, "Permissão negada.")
+        return redirect('gerenciar_grupo', grupo_id=grupo.id)
+        
+    busca = request.POST.get('busca', '').strip()
     
-        
-        # Trava de segurança: apenas administradores do grupo ou admin geral podem pôr pessoas
-        if request.user not in grupo.administradores.all() and not request.user.is_staff:
-            messages.error(request, "Apenas administradores do grupo podem adicionar membros.")
-            return redirect('gerenciar_grupo', grupo_id=grupo.id)
-            
-        busca = request.POST.get('busca', '').strip()
-        
-        # Procura por nickname (username) ou e-mail
+    # Busca o usuário alvo
+    try:
+        usuario_alvo = Usuario.objects.get(username=busca)
+    except Usuario.DoesNotExist:
         try:
-            novo_membro = Usuario.objects.get(username=busca)
+            usuario_alvo = Usuario.objects.get(email=busca)
         except Usuario.DoesNotExist:
-            try:
-                novo_membro = Usuario.objects.get(email=busca)
-            except Usuario.DoesNotExist:
-                messages.error(request, f"Nenhum usuário encontrado com o login ou e-mail '{busca}'.")
-                return redirect('gerenciar_grupo', grupo_id=grupo.id)
-                
-        if novo_membro in grupo.membros.all():
-            messages.warning(request, f"O usuário '{novo_membro.username}' os dados já faz parte deste grupo.")
-        else:
-            grupo.membros.add(novo_membro)
-            messages.success(request, f"Usuário '{novo_membro.username}' adicionado ao grupo com sucesso.")
-            
-    return redirect('gerenciar_grupo', grupo_id=grupo_id)
+            messages.error(request, f"Usuário '{busca}' não encontrado.")
+            return redirect('gerenciar_grupo', grupo_id=grupo.id)
 
+    # Verifica se já é membro
+    if usuario_alvo in grupo.membros.all():
+        messages.warning(request, f"'{usuario_alvo.username}' já faz parte deste grupo.")
+        return redirect('gerenciar_grupo', grupo_id=grupo.id)
+        
+    # Verifica se já existe um convite pendente para ele neste mesmo grupo
+    if ConviteGrupo.objects.filter(grupo=grupo, usuario_convidado=usuario_alvo).exists():
+        messages.warning(request, f"Já existe um convite pendente para '{usuario_alvo.username}'.")
+        return redirect('gerenciar_grupo', grupo_id=grupo.id)
+        
+    # Em vez de adicionar direto, cria o convite pendente
+    ConviteGrupo.objects.create(grupo=grupo, usuario_convidado=usuario_alvo)
+    messages.success(request, f"Convite enviado para '{usuario_alvo.username}'. Aguardando aprovação dele.")
+    return redirect('gerenciar_grupo', grupo_id=grupo.id)
+
+@usuario_obrigatorio
+def meus_convites(request):
+    # Lista todos os convites direcionados ao usuário logado
+    convites = ConviteGrupo.objects.filter(usuario_convidado=request.user).order_by('-data_envio')
+    return render(request, "meus_convites.html", {'convites': convites})
+@usuario_obrigatorio
+def responder_convite(request, convite_id, acao):
+    try:
+        convite = ConviteGrupo.objects.get(id=convite_id, usuario_convidado=request.user)
+    except Exception:
+        messages.error(request, "Convite não encontrado ou já processado.")
+        return redirect('meus_convites')
+
+    if acao == 'aceitar':
+        convite.grupo.membros.add(request.user)
+        messages.success(request, f"Você agora faz parte do grupo '{convite.grupo.nome}'!")
+    else:
+        messages.info(request, f"Convite para o grupo '{convite.grupo.nome}' recusado.")
+        
+    # Apaga o convite do banco após processar a decisão
+    convite.delete()
+    return redirect('meus_convites')
 @usuario_obrigatorio
 def meus_grupos_administrados(request):
     # Filtra os grupos onde o usuário logado é um dos administradores
     grupos = Grupo.objects.filter(administradores=request.user).order_by('-data_criacao')
     
     return render(request, "meus_grupos.html", {'grupos': grupos})
+
+@usuario_obrigatorio
+def remover_membro(request, grupo_id, usuario_id):
+    # Tratamento de erro customizado sem telas de erro técnicas do Django
+    try:
+        grupo = Grupo.objects.get(id=grupo_id)
+        usuario_alvo = Usuario.objects.get(id=usuario_id)
+    except Exception as e:
+        messages.error(request, "Erro ao acessar o grupo ou usuário desejado.")
+        return redirect('meus_grupos_administrados')
+
+    # Trava de segurança: usa o campo correto 'administradores'
+    if request.user not in grupo.administradores.all() and not request.user.is_staff:
+        messages.error(request, "Você não tem permissão para remover membros deste grupo.")
+        return redirect('gerenciar_grupo', grupo_id=grupo.id)
+
+    # Impede que o administrador se remova por acidente
+    if usuario_alvo == request.user:
+        messages.error(request, "Você não pode se remover do grupo por este botão.")
+        return redirect('gerenciar_grupo', grupo_id=grupo.id)
+
+    # Remove o usuário da lista de membros e de administradores
+    grupo.membros.remove(usuario_alvo)
+    if usuario_alvo in grupo.administradores.all():
+        grupo.administradores.remove(usuario_alvo)
+
+    messages.success(request, f"Usuário '{usuario_alvo.username}' foi removido do grupo.")
+    return redirect('gerenciar_grupo', grupo_id=grupo.id)
