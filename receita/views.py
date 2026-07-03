@@ -8,7 +8,7 @@ from django.db.models import Prefetch
 from django.contrib import messages 
 from decimal import Decimal
 from django.db.models.functions import Lower
-@usuario_obrigatorio
+@usuario
 def cadastrar_receita(request):
     materiais = Material.objects.all().order_by(Lower( 'nome'))
     unidades = Unidade.objects.all().order_by(Lower('unidades'))
@@ -18,7 +18,7 @@ def cadastrar_receita(request):
         'unidades': unidades
     }
     return render(request, "cadastroReceita.html", context)
-@usuario_obrigatorio
+@admin_geral
 def gerenciar_unidades(request):
     if request.method == 'POST':
         nome = request.POST.get('nome_unidade')
@@ -29,7 +29,7 @@ def gerenciar_unidades(request):
     unidades = Unidade.objects.all().order_by(Lower('unidades'))
     return render(request, 'gerenciar_unidades.html', {'unidades': unidades})
 
-@usuario_obrigatorio
+@admin_geral
 def editar_unidade(request, pk):
     try :
         unidade = Unidade.objects.get(pk=pk)
@@ -50,7 +50,7 @@ def editar_unidade(request, pk):
         'unidade_editando': unidade
     })
 
-@usuario_obrigatorio
+@admin_geral
 def excluir_unidade(request, pk):
     try :
         unidade = Unidade.objects.get(pk=pk)
@@ -61,7 +61,7 @@ def excluir_unidade(request, pk):
     return redirect('gerenciar_unidades')
 
 
-@usuario_obrigatorio
+@usuario
 def valida_cadastro_material(request):
     if request.method == "POST":
         nome_receita = request.POST.get('nome')
@@ -110,7 +110,7 @@ def valida_cadastro_material(request):
         return redirect('home')
 
     return redirect('home')
-@usuario_obrigatorio
+@usuario
 def mostrar_receita(request):
     # 1. Captura o ID e evita quebras caso o parâmetro venha vazio ou inválido
     try:
@@ -140,7 +140,7 @@ def mostrar_receita(request):
     receita.ingredientes_copy = receita.ingredientes.all()
 
     return render(request, "mostrar_receita.html", {'receita': receita})
-@usuario_obrigatorio
+@usuario
 def home(request):
     usuario_atual = request.user
     
@@ -171,7 +171,7 @@ def home(request):
     
     return render(request, "home.html", context)
 
-@usuario_obrigatorio
+@usuario
 def confirmar_exclusao(request):
     try:
         # Tenta capturar o ID da URL
@@ -191,7 +191,7 @@ def confirmar_exclusao(request):
         return redirect('/receita/home/')
 
 
-@usuario_obrigatorio
+@usuario
 def excluir_receita(request):
     if request.method == "POST":
         try:
@@ -219,7 +219,7 @@ def excluir_receita(request):
         
     return redirect('/receita/home/')
 
-@usuario_obrigatorio
+@usuario
 def editar_receita(request):
     try:
         receita_id = int(request.GET.get('receita'))
@@ -282,7 +282,7 @@ def editar_receita(request):
         'unidades': unidades,
     }
     return render(request, "editar_receita.html", context)
-@usuario_obrigatorio
+@admin_geral
 def gerenciar_ingredientes(request):
     if request.method == 'POST':
         nome = request.POST.get('nome_ingrediente')
@@ -293,7 +293,7 @@ def gerenciar_ingredientes(request):
     ingredientes = Material.objects.all().order_by(Lower('nome'))
     return render(request, 'gerenciar_ingredientes.html', {'ingredientes': ingredientes})
 
-@usuario_obrigatorio
+@admin_geral
 def editar_ingrediente(request, pk):
     try :
         ingrediente = Material.objects.get(pk=pk)
@@ -314,7 +314,7 @@ def editar_ingrediente(request, pk):
         'ingrediente_editando': ingrediente
     })
 
-@usuario_obrigatorio
+@admin_geral
 def excluir_ingrediente(request, pk):
     try :
         ingrediente = Material.objects.get(pk=pk)

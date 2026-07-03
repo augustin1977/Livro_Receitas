@@ -1,2 +1,67 @@
-<h1> Editar Cadastro de Usuários </h1>
-<br>By Eric Augustin
+{% extends 'base.html' %}
+{% block 'titulo' %} Editar Perfil {% endblock %}
+
+{% block 'menu'%} 
+{% include 'menu_basico.html' %}
+{% endblock %}
+
+{% block 'conteudo' %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm p-4">
+                <h1 class="text-center mb-4">Editar Meu Perfil</h1>
+                <hr>
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Nome de Usuário</label>
+                        <input 
+                            name="username" 
+                            class="form-control" 
+                            type="text" 
+                            value="{{ usuario_editando.username }}" 
+                            required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nome Completo</label>
+                        <input 
+                            name="nome" 
+                            class="form-control" 
+                            type="text" 
+                            value="{{ nome_completo }}" 
+                            required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">E-mail</label>
+                        <input 
+                            name="email" 
+                            class="form-control" 
+                            type="email" 
+                            value="{{ usuario_editando.email }}" 
+                            required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nova Senha</label>
+                        <input 
+                            name="senha" 
+                            class="form-control" 
+                            type="password" 
+                            placeholder="Deixe em branco para manter a senha atual">
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <input class="btn btn-success" type="submit" value="Salvar Alterações">
+                        <a href="{% url 'home' %}" class="btn btn-warning">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

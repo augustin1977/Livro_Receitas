@@ -10,6 +10,17 @@
     </div>
 </div>
 
+<div class="dropdown d-inline-block">
+    <a class="navbar-brand dropdown-toggle" href="#" id="dropGrupos" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        Grupos
+    </a>
+    <div class="dropdown-menu dropdown-menu-dark bg-dark" aria-labelledby="dropGrupos">
+        <a class="dropdown-item text-light" href="{% url 'cadastrar_grupo' %}">Criar Grupo</a>
+        <a class="dropdown-item text-light" href="{% url 'meus_grupos_administrados' %}">Gerenciar meus Grupos</a>
+    </div>
+</div>
+
+
 <a class="navbar-brand" href="{% url 'meus_convites' %}">
     Convites 
     {% if total_convites > 0 %}
@@ -18,6 +29,8 @@
         </span>
     {% endif %}
 </a>
+
+
 
 {% if request.user.is_staff %}
 <div class="dropdown d-inline-block">
@@ -29,13 +42,8 @@
     </div>
 </div>
 
-<div class="dropdown d-inline-block">
-    <a class="navbar-brand dropdown-toggle" href="#" id="dropGrupos" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-        Grupos
-    </a>
-    <div class="dropdown-menu dropdown-menu-dark bg-dark" aria-labelledby="dropGrupos">
-        <a class="dropdown-item text-light" href="{% url 'cadastrar_grupo' %}">Criar Grupo</a>
-        <a class="dropdown-item text-light" href="{% url 'meus_grupos_administrados' %}">Gerenciar meus Grupos</a>
-    </div>
-</div>
+
+<a class="navbar-brand" href="{% url 'editar' %}">
+    Meu Perfil
+</a>
 {% endif %}

@@ -17,10 +17,51 @@ def cadastrar(request):
     # cria a view do cadastro de usuaário
     status=str(request.GET.get('status'))
     return render(request, "cadastro.html", {'status':status})
-@usuario_obrigatorio
+@usuario
 def editar(request):
-    # Cria a view que edita o cadastro do usuário, ainda não implementado
-    return render(request, "editar.html")
+    usuario_logado = request.user
+
+    if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        nome_completo = request.POST.get("nome", "").strip()
+        email = request.POST.get("email", "").strip()
+        senha = request.POST.get("senha", "").strip()
+
+        if not username or not nome_completo or not email:
+            messages.error(request, "Nome de usuário, nome completo e e-mail são obrigatórios.")
+            return redirect("editar")
+
+        if Usuario.objects.exclude(id=usuario_logado.id).filter(username=username).exists():
+            messages.error(request, "Este nome de usuário já está em uso.")
+            return redirect("editar")
+
+        if Usuario.objects.exclude(id=usuario_logado.id).filter(email=email).exists():
+            messages.error(request, "Este e-mail já está em uso.")
+            return redirect("editar")
+
+        partes_nome = nome_completo.split()
+        usuario_logado.username = username
+        usuario_logado.first_name = partes_nome[0]
+        usuario_logado.last_name = " ".join(partes_nome[1:])
+        usuario_logado.email = email
+
+        if senha:
+            usuario_logado.set_password(senha)
+
+        usuario_logado.save()
+
+        if senha:
+            login_django(request, usuario_logado)
+
+        messages.success(request, "Cadastro atualizado com sucesso.")
+        return redirect("home")
+
+    nome_completo = f"{usuario_logado.first_name} {usuario_logado.last_name}".strip()
+
+    return render(request, "editar.html", {
+        "usuario_editando": usuario_logado,
+        "nome_completo": nome_completo,
+    })
 
 def valida_cadastro(request):
     if request.method != "POST":
@@ -128,12 +169,12 @@ def validar_login(request):
             
     # Caso tentem acessar a URL via GET diretamente
     return redirect('/auth/login/')
-    
+@usuario    
 def sair(request):
     request.session.flush() # sair do usuário
     return redirect('/auth/login')
 
-@usuario_obrigatorio
+@usuario
 def cadastrar_grupo(request):
     if request.method == "POST":
         nome_grupo = request.POST.get('nome', '').strip()
@@ -157,7 +198,7 @@ def cadastrar_grupo(request):
         
     return render(request, "cadastrar_grupo.html")
 
-@usuario_obrigatorio
+@usuario
 def gerenciar_grupo(request, grupo_id):
     try:
         grupo = Grupo.objects.get(id=grupo_id)
@@ -172,7 +213,7 @@ def gerenciar_grupo(request, grupo_id):
         
     return render(request, "gerenciar_grupo.html", {'grupo': grupo})
 
-@usuario_obrigatorio
+@usuario
 def adicionar_membro(request, grupo_id):
     if request.method != "POST":
         return redirect('meus_grupos_administrados')
@@ -215,12 +256,12 @@ def adicionar_membro(request, grupo_id):
     messages.success(request, f"Convite enviado para '{usuario_alvo.username}'. Aguardando aprovação dele.")
     return redirect('gerenciar_grupo', grupo_id=grupo.id)
 
-@usuario_obrigatorio
+@usuario
 def meus_convites(request):
     # Lista todos os convites direcionados ao usuário logado
     convites = ConviteGrupo.objects.filter(usuario_convidado=request.user).order_by('-data_envio')
     return render(request, "meus_convites.html", {'convites': convites})
-@usuario_obrigatorio
+@usuario
 def responder_convite(request, convite_id, acao):
     try:
         convite = ConviteGrupo.objects.get(id=convite_id, usuario_convidado=request.user)
@@ -238,13 +279,13 @@ def responder_convite(request, convite_id, acao):
     convite.delete()
     return redirect('meus_convites')
 
-@usuario_obrigatorio
+@usuario
 def meus_grupos_administrados(request):
     # Traz todos os grupos em que o usuário está na lista de membros (seja admin ou comum)
     grupos = Grupo.objects.filter(membros=request.user).distinct().order_by('nome')
     return render(request, "meus_grupos.html", {'grupos': grupos})
 
-@usuario_obrigatorio
+@usuario
 def sair_do_grupo(request, grupo_id):
     try:
         grupo = Grupo.objects.get(id=grupo_id)
@@ -276,7 +317,7 @@ def sair_do_grupo(request, grupo_id):
 
     messages.success(request, f"Você saiu do grupo '{grupo.nome}' com sucesso.")
     return redirect('meus_grupos_administrados')
-@usuario_obrigatorio
+@admin_grupo
 def remover_membro(request, grupo_id, usuario_id):
     # Tratamento de erro customizado sem telas de erro técnicas do Django
     try:
@@ -304,7 +345,7 @@ def remover_membro(request, grupo_id, usuario_id):
     messages.success(request, f"Usuário '{usuario_alvo.username}' foi removido do grupo.")
     return redirect('gerenciar_grupo', grupo_id=grupo.id)
 
-@usuario_obrigatorio
+@admin_grupo
 def promover_administrador(request, grupo_id, usuario_id):
     try:
         grupo = Grupo.objects.get(id=grupo_id)
@@ -333,7 +374,7 @@ def promover_administrador(request, grupo_id, usuario_id):
 
     messages.success(request, f"Usuário '{usuario_alvo.username}' agora também é administrador do grupo!")
     return redirect('gerenciar_grupo', grupo_id=grupo.id)
-@usuario_obrigatorio
+@admin_grupo
 def revogar_administrador(request, grupo_id, usuario_id):
     try:
         grupo = Grupo.objects.get(id=grupo_id)
@@ -343,7 +384,7 @@ def revogar_administrador(request, grupo_id, usuario_id):
         return redirect('meus_grupos_administrados')
 
     # Trava de segurança: apenas administradores do grupo ou admin geral podem revogar
-    if request.user not in grupo.administradores.all() and not request.user.is_staff:
+    if request.user not in grupo.administradores.all():
         messages.error(request, "Você não tem permissão para alterar privilégios neste grupo.")
         return redirect('gerenciar_grupo', grupo_id=grupo.id)
 
@@ -367,7 +408,7 @@ def revogar_administrador(request, grupo_id, usuario_id):
         return redirect('meus_grupos_administrados')
         
     return redirect('gerenciar_grupo', grupo_id=grupo.id)
-@usuario_obrigatorio
+@admin_grupo
 def excluir_grupo(request, grupo_id):
     try:
         grupo = Grupo.objects.get(id=grupo_id)
@@ -376,13 +417,12 @@ def excluir_grupo(request, grupo_id):
         return redirect('meus_grupos_administrados')
 
     # Trava de segurança: apenas quem está na lista de administradores do grupo ou admin geral pode deletar
-    if request.user not in grupo.administradores.all() and not request.user.is_staff:
+    if request.user not in grupo.administradores.all():
         messages.error(request, "Você não tem permissão para excluir este grupo.")
         return redirect('meus_grupos_administrados')
 
     nome_grupo = grupo.nome
-    
-    # Remove todos os vínculos de membros e administradores antes de apagar (boa prática do Django)
+        # Remove todos os vínculos de membros e administradores antes de apagar (boa prática do Django)
     grupo.membros.clear()
     grupo.administradores.clear()
     
