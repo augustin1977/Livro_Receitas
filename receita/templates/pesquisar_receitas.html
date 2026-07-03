@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block 'titulo' %} Pesquisar Receitas {% endblock %}
+
+{% block 'menu'%}
+{% include 'menu_basico.html' %}
+{% endblock %}
+
+{% block 'conteudo' %}
+<div class="container mt-4">
+    <h3>Pesquisar Receitas</h3>
+    <p class="text-muted">
+        Pesquise pelo nome da receita, criador ou ingrediente.
+    </p>
+    <hr>
+
+    <form method="GET" action="{% url 'pesquisar_receitas' %}" class="mb-4">
+        <div class="row g-2">
+            <div class="col-md-10">
+                <input 
+                    type="text" 
+                    name="q" 
+                    class="form-control" 
+                    placeholder="Digite pelo menos 4 caracteres..."
+                    value="{{ termo }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100">
+                    Pesquisar
+                </button>
+            </div>
+        </div>
+    </form>
+
+
+        <h5>Resultados para: "{{ termo }}"</h5>
+
+        <table class="table table-hover mt-3">
+            <thead>
+                <tr>
+                    <th>Receita</th>
+                    <th>Criador</th>
+                    <th>Data Cadastro</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for receita in receitas %}
+                <tr>
+                    <td>{{ receita.nome }}</td>
+                    <td>
+                        {% if receita.usuario.get_full_name %}
+                            {{ receita.usuario.get_full_name }}
+                        {% else %}
+                            @{{ receita.usuario.username }}
+                        {% endif %}
+                    </td>
+                    <td>{{ receita.data_cadastro|date:"d/m/Y H:i" }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'mostrar_receita' %}?receita={{ receita.id }}" class="btn btn-sm btn-outline-success" title="Visualizar">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </a>
+
+                        {% if receita.usuario == request.user %}
+                            <a href="{% url 'editar_receita' %}?receita={{ receita.id }}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'confirmar_exclusao' %}?receita={{ receita.id }}" class="btn btn-sm btn-outline-danger" title="Excluir">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-muted text-center">
+                        Nenhuma receita encontrada.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+
+    <a href="{% url 'home' %}" class="btn btn-warning mt-3">Voltar</a>
+</div>
+{% endblock %}

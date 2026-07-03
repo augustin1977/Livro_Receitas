@@ -27,4 +27,5 @@ urlpatterns = [
     path("excluir-conta/", views.excluir_conta, name="excluir_conta"),
     path("usuarios/", views.listar_usuarios, name="listar_usuarios"),
     path("usuarios/excluir/<int:usuario_id>/", views.excluir_usuario_admin, name="excluir_usuario_admin"),
+  
 ]

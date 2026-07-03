@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from usuarios.models import *
 from django.db.models import Q
+from django.http import JsonResponse
 from .models import *
 from autentica import *
 from django.db.models import Prefetch
@@ -112,28 +113,36 @@ def valida_cadastro_material(request):
     return redirect('home')
 @usuario
 def mostrar_receita(request):
-    # 1. Captura o ID e evita quebras caso o parâmetro venha vazio ou inválido
     try:
-        receita_id = int(request.GET.get('receita'))
+        receita_id = int(request.GET.get("receita"))
     except (TypeError, ValueError):
-        return redirect('/receita/home/')
+        messages.error(request, "Código de receita inválido.")
+        return redirect("home")
 
     usuario_atual = request.user
 
-    # 2. Tenta buscar a receita aplicando a regra de segurança no próprio banco:
-    # O criador deve ser o usuário atual OU a receita deve ser de alguém que compartilha um grupo com ele
-    try:
-        receita = Receita.objects.get(
-            Q(id=receita_id) & (
-                Q(usuario=usuario_atual) | 
-                Q(usuario__grupos__in=usuario_atual.grupos.all())
-            )
+    receita = Receita.objects.filter(
+        Q(id=receita_id) & (
+            Q(usuario=usuario_atual) |
+            Q(usuario__grupos__in=usuario_atual.grupos.all())
         )
-    except Receita.DoesNotExist:
-        # Se a receita não existir ou o usuário não tiver permissão de acesso,
-        # retornamos um erro de Proibido (HTTP 403) ou redirecionamos para a home
+    ).select_related(
+        "usuario"
+    ).prefetch_related(
+        "ingredientes",
+        "ingredientes__material",
+        "ingredientes__unidade"
+    ).distinct().first()
+
+    if not receita:
         messages.error(request, "Você não tem permissão para visualizar esta receita.")
-        return redirect('/receita/home/')
+        return redirect("home")
+
+    receita.ingredientes_copy = receita.ingredientes.all()
+
+    return render(request, "mostrar_receita.html", {
+        "receita": receita
+    })
 
     # 3. Busca os ingredientes vinculados à receita
     # Usamos o 'related_name' que definimos no modelo (ingredientes) para simplificar a busca
@@ -325,3 +334,29 @@ def excluir_ingrediente(request, pk):
     
     ingrediente.delete()
     return redirect('gerenciar_ingredientes')
+
+def pesquisar_receitas(request):
+    termo = request.GET.get("q", "").strip()
+    receitas = []
+
+
+    usuario_atual = request.user
+    grupos_usuario = usuario_atual.grupos.all()
+
+    receitas = Receita.objects.filter(
+        Q(usuario=usuario_atual) |
+        Q(usuario__grupos__in=grupos_usuario)
+    ).filter(
+        Q(nome__icontains=termo) |
+        Q(usuario__first_name__icontains=termo) |
+        Q(usuario__last_name__icontains=termo) |
+        Q(usuario__username__icontains=termo) |
+        Q(ingredientes__material__nome__icontains=termo)
+    ).select_related(
+        "usuario"
+    ).distinct().order_by("nome")
+
+    return render(request, "pesquisar_receitas.html", {
+        "termo": termo,
+        "receitas": receitas,
+    })
