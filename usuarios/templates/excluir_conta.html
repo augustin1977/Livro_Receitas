@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block 'titulo' %} Excluir Minha Conta {% endblock %}
+
+{% block 'menu'%}
+{% include 'menu_basico.html' %}
+{% endblock %}
+
+{% block 'conteudo' %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h4 class="mb-0">Excluir Minha Conta</h4>
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="alert alert-warning">
+                        <strong>Atenção:</strong> esta ação é permanente. Suas receitas, convites e vínculos com grupos serão removidos.
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label">Digite sua senha atual</label>
+                            <input name="senha" class="form-control" type="password" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Digite EXCLUIR para confirmar</label>
+                            <input name="confirmar" class="form-control" type="text" required>
+                        </div>
+
+                        <div class="d-flex justify-content-center gap-3 mt-4">
+                            <button class="btn btn-danger px-4" type="submit">Sim, excluir minha conta</button>
+                            <a href="{% url 'editar' %}" class="btn btn-secondary px-4">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,12 +4,14 @@
 {% block 'menu'%} 
 {% include 'menu_basico.html' %}
 {% endblock %}
+
 {% block 'conteudo' %} 
 <div class="container mt-4">
     <h5>Cadastrar Receita</h5>
     <hr>
     
-    <form method="POST" action="{% url 'valida_cadastro_material' %}" onsubmit="prepararEnvio()"> {% csrf_token %}
+    <form method="POST" action="{% url 'valida_cadastro_material' %}" onsubmit="prepararEnvio()"> 
+        {% csrf_token %}
         
         <label class="form-label">Nome da Receita</label>
         <input name="nome" class="form-control" type="text" placeholder="Nome da receita" required>
@@ -36,7 +38,7 @@
                 <select id="unidade" class="form-control"> 
                     <option value="">Selecione a unidade...</option>
                     {% for uni in unidades %}
-                        <option value="{{ uni.id }}">{{ uni.unidades }} ({{ uni.simbolo }})</option>
+                        <option value="{{ uni.id }}">{{ uni.unidades }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -49,8 +51,7 @@
         </div>
 
         <label class="form-label">Ingredientes Adicionados</label>
-        <ul id="ListaVisual" class="list-group mb-3">
-            </ul>
+        <ul id="ListaVisual" class="list-group mb-3"></ul>
 
         <input type="hidden" id="IngredientesSelecionados" name="IngredientesSelecionados" required>
 
@@ -65,6 +66,7 @@
 
 <script>
     var listaIngredientes = [];
+
     window.onload = function() {
         renderizarLista();
     };
@@ -75,25 +77,21 @@
         var unidadeSelect = document.getElementById("unidade");
         
         var materialId = materialSelect.value;
-        var materialNome = materialSelect.options[materialSelect.selectedIndex].text;
         var quantidade = quantidadeInput.value;
         var unidadeId = unidadeSelect.value;
-        var unidadeSimbolo = '';
-        
-        if (unidadeSelect.selectedIndex > 0) {
-            var textoUnidade = unidadeSelect.options[unidadeSelect.selectedIndex].text;
-            unidadeSimbolo = textoUnidade.substring(textoUnidade.indexOf('(') + 1, textoUnidade.indexOf(')'));
-        }
 
         if (!materialId || !quantidade || !unidadeId) {
             alert("Por favor, preencha o ingrediente, a quantidade e a unidade.");
             return;
         }
 
+        var materialNome = materialSelect.options[materialSelect.selectedIndex].text;
+        var unidadeTexto = unidadeSelect.options[unidadeSelect.selectedIndex].text;
+
         var novoIngrediente = {
-            id: Date.now(), 
+            id: Date.now(),
             backend: materialId + ";" + quantidade + ";" + unidadeId,
-            texto: quantidade + " " + unidadeSimbolo + " de " + materialNome
+            texto: quantidade + " " + unidadeTexto + " de " + materialNome
         };
         
         listaIngredientes.push(novoIngrediente);
@@ -117,10 +115,12 @@
         listaIngredientes.forEach(function(item) {
             var li = document.createElement("li");
             li.className = "list-group-item d-flex justify-content-between align-items-center";
-            li.innerHTML = "<span>" + item.texto + "</span>" +
-                           '<button type="button" class="btn btn-sm btn-outline-danger" onclick="removerIngrediente(' + item.id + ')">' +
-                           '<i class="bi bi-trash"></i>' +
-                           '</button>';
+            li.innerHTML = 
+                "<span>" + item.texto + "</span>" +
+                '<button type="button" class="btn btn-sm btn-outline-danger" onclick="removerIngrediente(' + item.id + ')">' +
+                '<i class="bi bi-trash"></i>' +
+                '</button>';
+
             ul.appendChild(li);
         });
     }
@@ -135,9 +135,11 @@
 
     function prepararEnvio() {
         var campoOculto = document.getElementById("IngredientesSelecionados");
+
         var stringsBackend = listaIngredientes.map(function(item) {
             return item.backend;
         });
+
         campoOculto.value = stringsBackend.join("\n");
     }
 </script>

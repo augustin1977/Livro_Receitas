@@ -8,8 +8,9 @@ class Tipo(models.Model):
         return self.tipo
 class Usuario(AbstractUser):
     """Usa username nativo como login/nickname, email, first_name e last_name"""
-    foto = models.ImageField(upload_to='perfis/', null=True, blank=True)
     tipo = models.ForeignKey(Tipo, on_delete=models.DO_NOTHING, null=True, blank=True)
+    deve_trocar_senha= models.BooleanField(default=False)
+    
     
     def __str__(self):
         # Retorna o primeiro nome se houver, senão o nickname de login

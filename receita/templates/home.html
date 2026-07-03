@@ -21,7 +21,13 @@
         <tr>
             <th scope="row">{{ receita.numero_exibicao }}</th>
             <td>{{receita.nome}}</td>
-            <td>{{receita.usuario.nome}}</td>
+            <td>
+                {% if receita.usuario.get_full_name %}
+                    {{ receita.usuario.get_full_name }}
+                {% else %}
+                    @{{ receita.usuario.username }}
+                {% endif %}
+            </td>
             <td>{{receita.data_cadastro|date:"d/m/Y H:i"}}</td>
             <td>
               <a href="{% url 'mostrar_receita' %}?receita={{ receita.id }}" class="btn btn-outline-success me-1" title="Visualizar">
@@ -61,7 +67,13 @@
                 <tr>
                     <th scope="row">{{ receita.numero_exibicao }}</th>
                     <td>{{receita.nome}}</td>
-                    <td>{{receita.usuario.nome}}</td>
+                    <td>
+                        {% if receita.usuario.get_full_name %}
+                            {{ receita.usuario.get_full_name }}
+                        {% else %}
+                            @{{ receita.usuario.username }}
+                        {% endif %}
+                    </td>
                     <td>{{receita.data_cadastro|date:"d/m/Y H:i"}}</td>
                     <td><a href="{% url 'mostrar_receita' %}?receita={{ receita.id }}" class="btn btn-outline-success me-1" title="Visualizar">
                     <i class="bi bi-file-earmark-text"></i>

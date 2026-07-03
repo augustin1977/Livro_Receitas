@@ -21,4 +21,10 @@ urlpatterns = [
     path('grupo/<int:grupo_id>/promover/<int:usuario_id>/', views.promover_administrador, name='promover_administrador'),
     path('grupo/<int:grupo_id>/revogar/<int:usuario_id>/', views.revogar_administrador, name='revogar_administrador'),
     path('grupo/excluir/<int:grupo_id>/', views.excluir_grupo, name='excluir_grupo'),
+    path("alterar-senha/", views.alterar_senha, name="alterar_senha"),
+    path("esqueci-senha/", views.esqueci_senha, name="esqueci_senha"),
+    path("trocar-senha-obrigatoria/", views.trocar_senha_obrigatoria, name="trocar_senha_obrigatoria"),
+    path("excluir-conta/", views.excluir_conta, name="excluir_conta"),
+    path("usuarios/", views.listar_usuarios, name="listar_usuarios"),
+    path("usuarios/excluir/<int:usuario_id>/", views.excluir_usuario_admin, name="excluir_usuario_admin"),
 ]

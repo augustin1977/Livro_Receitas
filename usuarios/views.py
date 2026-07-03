@@ -1,18 +1,171 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from .models import *
+from receita.models import *
 from django.shortcuts import redirect 
 from hashlib import sha256
 from django.contrib.auth import authenticate
-from django.contrib.auth import login as login_django
+from django.contrib.auth import login as login_django, logout
 from autentica import *
 from django.db import IntegrityError
 import re
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils.crypto import get_random_string
 def login(request):
     # cria a view do login do usuário
     status=str(request.GET.get('status'))
     return render(request, "login.html", {'status':status})
+@usuario
+def alterar_senha(request):
+    if request.method == "POST":
+        senha_atual = request.POST.get("senha_atual")
+        nova_senha = request.POST.get("nova_senha")
+        confirmar_senha = request.POST.get("confirmar_senha")
 
+        if not request.user.check_password(senha_atual):
+            messages.error(request, "Senha atual incorreta.")
+            return redirect("alterar_senha")
+
+        if nova_senha != confirmar_senha:
+            messages.error(request, "As novas senhas não conferem.")
+            return redirect("alterar_senha")
+
+        if len(nova_senha) < 6:
+            messages.error(request, "A nova senha deve ter pelo menos 6 caracteres.")
+            return redirect("alterar_senha")
+
+        request.user.set_password(nova_senha)
+        request.user.deve_trocar_senha = False
+        request.user.save()
+
+        login_django(request, request.user)
+
+        messages.success(request, "Senha alterada com sucesso.")
+        return redirect("home")
+
+    return render(request, "alterar_senha.html")
+def esqueci_senha(request):
+    if request.method == "POST":
+        email = request.POST.get("email", "").strip()
+
+        try:
+            usuario = Usuario.objects.get(email=email)
+        except Usuario.DoesNotExist:
+            messages.error(request, "Não existe usuário cadastrado com este e-mail.")
+            return redirect("esqueci_senha")
+
+        senha_provisoria = get_random_string(10)
+
+        usuario.set_password(senha_provisoria)
+        usuario.deve_trocar_senha = True
+        usuario.save()
+
+        send_mail(
+            "Senha provisória - Livro de Receitas",
+            f"Sua senha provisória é: {senha_provisoria}\n\nAo entrar no sistema, você será obrigado a criar uma nova senha.",
+            settings.DEFAULT_FROM_EMAIL,
+            [usuario.email],
+            fail_silently=False,
+        )
+
+        messages.success(request, "Uma senha provisória foi enviada para seu e-mail.")
+        return redirect("login")
+
+    return render(request, "esqueci_senha.html")
+
+@usuario
+def trocar_senha_obrigatoria(request):
+    if not request.user.deve_trocar_senha:
+        return redirect("home")
+
+    if request.method == "POST":
+        nova_senha = request.POST.get("nova_senha")
+        confirmar_senha = request.POST.get("confirmar_senha")
+
+        if nova_senha != confirmar_senha:
+            messages.error(request, "As senhas não conferem.")
+            return redirect("trocar_senha_obrigatoria")
+
+        if len(nova_senha) < 6:
+            messages.error(request, "A nova senha deve ter pelo menos 6 caracteres.")
+            return redirect("trocar_senha_obrigatoria")
+
+        request.user.set_password(nova_senha)
+        request.user.deve_trocar_senha = False
+        request.user.save()
+
+        login_django(request, request.user)
+
+        messages.success(request, "Senha alterada com sucesso.")
+        return redirect("home")
+
+    return render(request, "trocar_senha_obrigatoria.html")
+
+@usuario
+def excluir_conta(request):
+    if request.method == "POST":
+        senha = request.POST.get("senha")
+        confirmar = request.POST.get("confirmar")
+
+        if confirmar != "EXCLUIR":
+            messages.error(request, "Digite EXCLUIR para confirmar.")
+            return redirect("excluir_conta")
+
+        if not request.user.check_password(senha):
+            messages.error(request, "Senha incorreta.")
+            return redirect("excluir_conta")
+
+        usuario = request.user
+
+        receitas = Receita.objects.filter(usuario=usuario)
+        Ingrediente.objects.filter(receita__in=receitas).delete()
+        receitas.delete()
+
+        usuario.grupos.clear()
+        usuario.grupos_administrados.clear()
+        usuario.convites_recebidos.all().delete()
+
+        logout(request)
+        usuario.delete()
+
+        messages.success(request, "Sua conta foi excluída com sucesso.")
+        return redirect("login")
+
+    return render(request, "excluir_conta.html")
+@admin_geral
+def listar_usuarios(request):
+    usuarios = Usuario.objects.all().order_by("username")
+    return render(request, "listar_usuarios.html", {"usuarios": usuarios})
+
+
+@admin_geral
+def excluir_usuario_admin(request, usuario_id):
+    usuario_alvo = get_object_or_404(Usuario, id=usuario_id)
+
+    if usuario_alvo == request.user:
+        messages.error(request, "Você não pode excluir sua própria conta por esta tela.")
+        return redirect("listar_usuarios")
+
+    if request.method == "POST":
+        receitas = Receita.objects.filter(usuario=usuario_alvo)
+        Ingrediente.objects.filter(receita__in=receitas).delete()
+        receitas.delete()
+
+        usuario_alvo.grupos.clear()
+        usuario_alvo.grupos_administrados.clear()
+        usuario_alvo.convites_recebidos.all().delete()
+
+        nome = usuario_alvo.username
+        usuario_alvo.delete()
+
+        messages.success(request, f"Usuário '{nome}' excluído com sucesso.")
+        return redirect("listar_usuarios")
+
+    return render(request, "confirmar_excluir_usuario.html", {
+        "usuario_alvo": usuario_alvo
+    })
 def cadastrar(request):
     # cria a view do cadastro de usuaário
     status=str(request.GET.get('status'))
@@ -143,32 +296,34 @@ def valida_cadastro(request):
         return render(request, 'cadastro.html', contexto_retorno)
 
 def validar_login(request):
-    if request.method == "POST":
-        nome = request.POST.get('username')
-        senha = request.POST.get('senha')
-        
-        # 1. Como o login padrão do Django busca por 'username', precisamos
-        # encontrar o username correspondente ao e-mail digitado.
-        try:
-            usuario_objeto = Usuario.objects.get(username=nome)
-            username = usuario_objeto.username
-        except Usuario.DoesNotExist:
-            # Se o e-mail não existir, redireciona informando erro
-            return redirect('/auth/login/?status=1')
+    if request.method != "POST":
+        return redirect("login")
 
-        # 2. O authenticate valida se o username e a senha batem
-        usuario_autenticado = authenticate(request, username=username, password=senha)
-        
-        if usuario_autenticado is not None:
-            # 3. Loga o usuário criando a sessão segura nativa do Django
-            login_django(request, usuario_autenticado)
-            return redirect('/receita/home/')
-        else:
-            # Senha incorreta
-            return redirect('/auth/login/?status=1')
-            
-    # Caso tentem acessar a URL via GET diretamente
-    return redirect('/auth/login/')
+    nome = request.POST.get("username", "").strip()
+    senha = request.POST.get("senha", "")
+
+    try:
+        usuario_objeto = Usuario.objects.get(username=nome)
+    except Usuario.DoesNotExist:
+        return redirect("/auth/login/?status=1")
+
+    usuario_autenticado = authenticate(
+        request,
+        username=usuario_objeto.username,
+        password=senha
+    )
+
+    if usuario_autenticado is None:
+        messages.error(request, "Usuário ou senha inválidos.")
+        return redirect("login")
+
+    login_django(request, usuario_autenticado)
+
+    if usuario_autenticado.deve_trocar_senha:
+        return redirect("trocar_senha_obrigatoria")
+
+    return redirect("/receita/home/")
+
 @usuario    
 def sair(request):
     request.session.flush() # sair do usuário

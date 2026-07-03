@@ -83,7 +83,7 @@ def valida_cadastro_material(request):
         # Quebra o texto por linhas
         linhas = ingredientes_string.strip().split('\n')
         
-        for linha in int(len(linhas)) if isinstance(linhas, str) else linhas:
+        for linha in linhas:
             if not linha.strip():
                 continue
                 
@@ -166,7 +166,8 @@ def home(request):
 
     context = {
         'Grupos': grupos,
-        'ReceitasPessoais': receitas_pessoais
+        'ReceitasPessoais': receitas_pessoais,
+        'usuario':usuario_atual.get_full_name()
     }
     
     return render(request, "home.html", context)

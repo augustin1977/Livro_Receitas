@@ -47,12 +47,13 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Nova Senha</label>
-                        <input 
-                            name="senha" 
-                            class="form-control" 
-                            type="password" 
-                            placeholder="Deixe em branco para manter a senha atual">
+                        <a href="{% url 'alterar_senha' %}" class="btn btn-outline-primary">
+                            Alterar Senha
+                        </a>
+
+                        <a href="{% url 'excluir_conta' %}" class="btn btn-outline-danger">
+                            Excluir Minha Conta
+                        </a>
                     </div>
 
                     <div class="d-grid gap-2 mt-4">

@@ -38,12 +38,13 @@
         Administração
     </a>
     <div class="dropdown-menu dropdown-menu-dark bg-dark" aria-labelledby="dropAdmin">
+        <a class="dropdown-item text-light" href="{% url 'listar_usuarios' %}">Gerenciar Usuários</a>
         <a class="dropdown-item text-light" href="{% url 'cadastrar' %}">Cadastrar Usuários</a>
     </div>
 </div>
+{% endif %}
 
 
 <a class="navbar-brand" href="{% url 'editar' %}">
     Meu Perfil
 </a>
-{% endif %}

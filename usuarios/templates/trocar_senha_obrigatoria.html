@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block 'titulo' %} Troca Obrigatória de Senha {% endblock %}
+
+{% block 'conteudo' %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm p-4 border-warning">
+                <h1 class="text-center mb-4">Crie uma Nova Senha</h1>
+                <hr>
+
+                <div class="alert alert-warning text-center">
+                    Você está usando uma senha provisória. Para continuar, cadastre uma nova senha.
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Nova Senha</label>
+                        <input name="nova_senha" class="form-control" type="password" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Confirmar Nova Senha</label>
+                        <input name="confirmar_senha" class="form-control" type="password" required>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button class="btn btn-success" type="submit">Definir Nova Senha</button>
+                        <a href="{% url 'sair' %}" class="btn btn-outline-secondary">Sair</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

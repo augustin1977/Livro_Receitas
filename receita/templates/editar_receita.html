@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block 'titulo' %} Editar Receita {% endblock %}
+
 {% block 'menu'%} 
 {% include 'menu_basico.html' %}
 {% endblock %}
@@ -9,7 +10,8 @@
     <h5>Editar Receita</h5>
     <hr>
     
-    <form method="POST" onsubmit="prepararEnvio()"> {% csrf_token %}
+    <form method="POST" onsubmit="prepararEnvio()"> 
+        {% csrf_token %}
         
         <label class="form-label">Nome da Receita</label>
         <input name="nome" class="form-control" type="text" value="{{ receita.nome }}" required>
@@ -36,7 +38,7 @@
                 <select id="unidade" class="form-control"> 
                     <option value="">Selecione a unidade...</option>
                     {% for uni in unidades %}
-                        <option value="{{ uni.id }}">{{ uni.unidades }} ({{ uni.simbolo }})</option>
+                        <option value="{{ uni.id }}">{{ uni.unidades }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -57,8 +59,7 @@
                     <th width="80" class="text-center">Ação</th>
                 </tr>
             </thead>
-            <tbody id="TabelaVisual">
-                </tbody>
+            <tbody id="TabelaVisual"></tbody>
         </table>
 
         <input type="hidden" id="IngredientesSelecionados" name="IngredientesSelecionados" required>
@@ -75,14 +76,13 @@
 <script>
     var listaIngredientes = [];
 
-    // Carrega os dados existentes do banco de dados para a memória do JavaScript
     window.onload = function() {
         {% for ing in receita.ingredientes.all %}
             listaIngredientes.push({
-                id: Date.now() + Math.random(), // Evita chaves duplicadas no loop rápido
+                id: Date.now() + Math.random(),
                 backend: "{{ ing.material.id }};{{ ing.quantidade|stringformat:'.2f' }};{{ ing.unidade.id }}",
-                textoNome: "{{ ing.material.nome }}",
-                textoMedida: "{{ ing.quantidade }} {{ ing.unidade.simbolo }}"
+                textoNome: "{{ ing.material.nome|escapejs }}",
+                textoMedida: "{{ ing.quantidade }} {{ ing.unidade.unidades|escapejs }}"
             });
         {% endfor %}
         
@@ -95,26 +95,22 @@
         var unidadeSelect = document.getElementById("unidade");
         
         var materialId = materialSelect.value;
-        var materialNome = materialSelect.options[materialSelect.selectedIndex].text;
         var quantidade = quantidadeInput.value;
         var unidadeId = unidadeSelect.value;
-        var unidadeSimbolo = '';
-        
-        if (unidadeSelect.selectedIndex > 0) {
-            var textoUnidade = unidadeSelect.options[unidadeSelect.selectedIndex].text;
-            unidadeSimbolo = textoUnidade.substring(textoUnidade.indexOf('(') + 1, textoUnidade.indexOf(')'));
-        }
 
         if (!materialId || !quantidade || !unidadeId) {
             alert("Por favor, preencha o ingrediente, a quantidade e a unidade.");
             return;
         }
 
+        var materialNome = materialSelect.options[materialSelect.selectedIndex].text;
+        var unidadeTexto = unidadeSelect.options[unidadeSelect.selectedIndex].text;
+
         var novoIngrediente = {
-            id: Date.now(), 
+            id: Date.now(),
             backend: materialId + ";" + quantidade + ";" + unidadeId,
             textoNome: materialNome,
-            textoMedida: quantidade + " " + unidadeSimbolo
+            textoMedida: quantidade + " " + unidadeTexto
         };
         
         listaIngredientes.push(novoIngrediente);
@@ -136,13 +132,16 @@
 
         listaIngredientes.forEach(function(item) {
             var tr = document.createElement("tr");
-            tr.innerHTML = "<td>" + item.textoNome + "</td>" +
-                           "<td>" + item.textoMedida + "</td>" +
-                           '<td class="text-center">' +
-                           '<button type="button" class="btn btn-sm btn-outline-danger" onclick="removerIngrediente(' + item.id + ')">' +
-                           '<i class="bi bi-trash"></i>' +
-                           '</button>' +
-                           '</td>';
+
+            tr.innerHTML = 
+                "<td>" + item.textoNome + "</td>" +
+                "<td>" + item.textoMedida + "</td>" +
+                '<td class="text-center">' +
+                '<button type="button" class="btn btn-sm btn-outline-danger" onclick="removerIngrediente(' + item.id + ')">' +
+                '<i class="bi bi-trash"></i>' +
+                '</button>' +
+                '</td>';
+
             tbody.appendChild(tr);
         });
     }
@@ -151,14 +150,17 @@
         listaIngredientes = listaIngredientes.filter(function(item) {
             return item.id !== idParaRemover;
         });
+
         renderizarTabela();
     }
 
     function prepararEnvio() {
         var campoOculto = document.getElementById("IngredientesSelecionados");
+
         var stringsBackend = listaIngredientes.map(function(item) {
             return item.backend;
         });
+
         campoOculto.value = stringsBackend.join("\n");
     }
 </script>

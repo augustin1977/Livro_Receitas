@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block 'titulo' %} Alterar Senha {% endblock %}
+
+{% block 'menu'%}
+{% include 'menu_basico.html' %}
+{% endblock %}
+
+{% block 'conteudo' %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm p-4">
+                <h1 class="text-center mb-4">Alterar Senha</h1>
+                <hr>
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Senha Atual</label>
+                        <input name="senha_atual" class="form-control" type="password" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nova Senha</label>
+                        <input name="nova_senha" class="form-control" type="password" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Confirmar Nova Senha</label>
+                        <input name="confirmar_senha" class="form-control" type="password" required>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button class="btn btn-success" type="submit">Salvar Nova Senha</button>
+                        <a href="{% url 'editar' %}" class="btn btn-warning">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

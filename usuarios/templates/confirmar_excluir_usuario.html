@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block 'titulo' %} Confirmar Exclusão {% endblock %}
+{% block 'menu'%}{% include 'menu_basico.html' %}{% endblock %}
+
+{% block 'conteudo' %}
+<div class="container mt-5">
+    <div class="card border-danger shadow">
+        <div class="card-header bg-danger text-white text-center">
+            <h4>Excluir Usuário</h4>
+        </div>
+
+        <div class="card-body">
+            <div class="alert alert-warning">
+                Esta ação excluirá o usuário, suas receitas, convites e vínculos com grupos.
+            </div>
+
+            <p>Deseja excluir o usuário abaixo?</p>
+
+            <h4 class="text-danger">@{{ usuario_alvo.username }}</h4>
+            <p>{{ usuario_alvo.first_name }} {{ usuario_alvo.last_name }} — {{ usuario_alvo.email }}</p>
+
+            <form method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Sim, excluir usuário</button>
+                <a href="{% url 'listar_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
