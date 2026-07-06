@@ -21,4 +21,5 @@ urlpatterns = [
     path("receita/",include("receita.urls")),
     path("auth/", include("usuarios.url")),
     path("", include("usuarios.url")),
+    path('social/', include('social.urls')),
 ]

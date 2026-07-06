@@ -59,8 +59,83 @@
 
         </div>
     </div>
-</div>
+        <hr>
+        <h3>Comentários e Opiniões</h3>
 
+        {% if user.is_authenticated %}
+            <form action="{% url 'adicionar_comentario' receita.id %}" method="POST" style="margin-bottom: 30px;">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="texto">Compartilhe sua opinião sobre esta receita:</label>
+                    <textarea name="texto" id="texto" rows="3" class="form-control" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Enviar Comentário</button>
+            </form>
+        {% else %}
+            <p style="margin-bottom: 30px;"><a href="{% url 'login' %}">Faça login</a> para deixar um comentário.</p>
+        {% endif %}
+
+        <div class="comentarios-lista">
+    {% for comentario in receita.comentarios.all %}
+        <div class="comentario-item" style="margin-bottom: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 5px;">
+            <p style="margin-bottom: 5px;">
+                <strong>{{ comentario.usuario.username }}</strong> 
+                <small style="color: #666; margin-left: 10px;">{{ comentario.data_criacao|date:"d/m/Y H:i" }}
+                {% if comentario.data_edicao|date:"U" != comentario.data_criacao|date:"U" %}
+                    <span style="color: #999; font-style: italic; margin-left: 5px;" title="Editado em: {{ comentario.data_edicao|date:'d/m/Y H:i' }}">
+                        (editado em {{ comentario.data_edicao|date:'d/m/Y H:i' }} )
+                    </span>
+                {% endif %}
+                </small>
+            </p>
+            
+            <p id="texto-{{ comentario.id }}" style="margin: 0;">{{ comentario.texto }}</p>
+
+            <div style="margin-top: 10px;">
+                {% if comentario.usuario == request.user %}
+                    <a href="#" onclick="toggleEdicao('{{ comentario.id }}'); return false;" class="tooltip-social tooltip-editar"data-texto="Editar comentário">
+                        <i class="bi bi-pencil-square"></i>
+                    </a>
+                {% endif %}
+
+                {% if comentario.usuario == request.user or receita.usuario == request.user or user.is_staff or user.is_superuser %}
+                    <a href="{% url 'excluir_comentario' comentario.id %}" onclick="return confirm('Tem certeza que deseja excluir este comentário?');" class="tooltip-social tooltip-excluir"  data-texto="Excluir comentário">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                {% endif %}
+            </div>
+
+            {% if comentario.usuario == request.user %}
+                <form id="form-editar-{{ comentario.id }}" action="{% url 'editar_comentario' comentario.id %}" method="POST" style="display: none; margin-top: 10px;">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <textarea name="texto" rows="2" class="form-control" required>{{ comentario.texto }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-success" style="margin-top: 5px;">Salvar</button>
+                    <button type="button" onclick="toggleEdicao('{{ comentario.id }}')" class="btn btn-sm btn-secondary" style="margin-top: 5px;">Cancelar</button>
+                </form>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>Nenhum comentário ainda. Seja o primeiro a comentar!</p>
+    {% endfor %}
+</div>
+</div>
+<script>
+function toggleEdicao(id) {
+    var texto = document.getElementById('texto-' + id);
+    var form = document.getElementById('form-editar-' + id);
+    
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        texto.style.display = 'none';
+    } else {
+        form.style.display = 'none';
+        texto.style.display = 'block';
+    }
+}
+
+</script>
 {% load static %}
 <script src="{% static 'js/favoritos.js' %}"></script>
 {% endblock %}

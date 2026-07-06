@@ -62,3 +62,73 @@ body {
 .icone-favorito:hover {
     transform: scale(1.1);
 }
+/* Base para todos os ícones com balão descritivo */
+.tooltip-social {
+    position: relative;
+    display: inline-block;
+    font-size: 1.25em; /* Tamanho padronizado para todos os ícones de ação */
+    text-decoration: none;
+    transition: transform 0.1s ease;
+}
+
+.tooltip-social:hover {
+    transform: scale(1.1); /* Um leve destaque ao passar o mouse */
+}
+
+/* Configuração do balão explicativo usando padrão escuro do Bootstrap */
+.tooltip-social::after {
+    content: attr(data-texto);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #212529; /* Cor dark do Bootstrap */
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 100;
+}
+
+.tooltip-social:hover::after {
+    opacity: 1;
+}
+
+/* Categorias de Ações (Cores baseadas no Bootstrap) */
+
+/* CADASTRAR / ADICIONAR (Padrão Success - Verde) */
+.tooltip-cadastrar {
+    color: #ffc107;
+}
+.tooltip-cadastrar:hover {
+    color: #ffc107;
+}
+
+/* VISUALIZAR / DETALHES (Padrão Info/Primary - Azul) */
+.tooltip-visualizar {
+    color: #198754;
+    
+}
+.tooltip-visualizar:hover {
+    color: #198754;
+}
+
+/* EDITAR / ALTERAR (Padrão Warning/Orange - Laranja) */
+.tooltip-editar {
+    color: #0d6efd;
+}
+.tooltip-editar:hover {
+    color: #0d6efd;
+}
+
+/* EXCLUIR / REMOVER (Padrão Danger - Vermelho) */
+.tooltip-excluir {
+    color: #dc3545;
+}
+.tooltip-excluir:hover {
+    color: #b02a37;
+}
