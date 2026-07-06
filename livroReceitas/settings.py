@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'receita',
     'usuarios',
     'social',
+    'logs',
 ]
 
 MIDDLEWARE = [

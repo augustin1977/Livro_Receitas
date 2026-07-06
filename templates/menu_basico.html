@@ -50,3 +50,12 @@
 <a class="navbar-brand" href="{% url 'editar' %}">
     Meu Perfil
 </a>
+
+
+{% if user.is_authenticated and user.is_staff or user.is_superuser %}
+    <li class="nav-item">
+        <a class="nav-link text-danger fw-bold" href="{% url 'painel_administrador_logs' %}">
+            <i class="bi bi-shield-check me-1"></i>Painel Logs
+        </a>
+    </li>
+{% endif %}

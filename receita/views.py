@@ -9,6 +9,7 @@ from django.db.models import Prefetch
 from django.contrib import messages 
 from decimal import Decimal
 from django.db.models.functions import Lower
+from logs.utils import registrar_log
 
 @usuario
 def home(request):
@@ -41,8 +42,7 @@ def home(request):
         "total_convites": total_convites,
         "ultimas_receitas": ultimas_receitas,
     })
-
-
+    
 @usuario
 def cadastrar_receita(request):
     materiais = Material.objects.all().order_by(Lower( 'nome'))
@@ -53,12 +53,19 @@ def cadastrar_receita(request):
         'unidades': unidades
     }
     return render(request, "cadastroReceita.html", context)
+
 @admin_geral
 def gerenciar_unidades(request):
     if request.method == 'POST':
         nome = request.POST.get('nome_unidade')
         if nome:
-            Unidade.objects.create(unidades=nome.capitalize())
+            unidade = Unidade(unidades=nome.capitalize())
+            unidade.save()
+            usuario=request.user
+            registrar_log(usuario=usuario,
+                    acao='CRIAR_UNIDADE',
+                    id_objeto_alvo=unidade.id,
+                    nome_objeto=unidade.unidades)
         return redirect('gerenciar_unidades')
 
     unidades = Unidade.objects.all().order_by(Lower('unidades'))
@@ -68,15 +75,23 @@ def gerenciar_unidades(request):
 def editar_unidade(request, pk):
     try :
         unidade = Unidade.objects.get(pk=pk)
-    except:
+        nome_antigo= str(unidade.nome)
+    except Exception :
         messages.error(request, "Unidade não existe")
-        redirect("gerenciar_unidades")
+        return redirect("gerenciar_unidades")
     
     if request.method == 'POST':
         nome = request.POST.get('nome_unidade')
         if nome:
             unidade.unidades = nome.capitalize()
             unidade.save()
+            registrar_log(
+                        usuario=request.user, 
+                        acao='EDITAR_UNIDADE', 
+                        id_objeto_alvo=unidade.id, 
+                        nome_objeto=unidade.unidades,
+                        dados_anteriores={"nome_anterior":nome_antigo}
+                    )
         return redirect('gerenciar_unidades')
         
     unidades = Unidade.objects.all().order_by(Lower('unidades'))
@@ -92,7 +107,14 @@ def excluir_unidade(request, pk):
     except:
         messages.error(request, "Unidade não existe")
         redirect("gerenciar_unidades")
+    nome=str(unidade.unidades)
     unidade.delete()
+    registrar_log(
+                        usuario=request.user, 
+                        acao='EXCLUIR_UNIDADE', 
+                        id_objeto_alvo=unidade.id,
+                        nome_objeto=nome 
+                    )
     return redirect('gerenciar_unidades')
 
 
