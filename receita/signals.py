@@ -31,8 +31,9 @@ def popular_dados_sempre(sender, **kwargs):
 
     for unidades in unidades_dados:
         # O get_or_create garante que só insere se não existir
-        Unidade.objects.get_or_create(unidades=unidades.capitalize())
-        print (f"unidade {unidades} Criada com sucesso")
+        _, status =Unidade.objects.get_or_create(unidades=unidades.capitalize())
+        if status:
+            print (f"unidade {unidades} Criada com sucesso")
     print ("Unidades de medida cadastrados com sucesso!")
     # 2. Lista de Materiais
     print("Carregando ingredientes basicos.")
@@ -74,6 +75,7 @@ def popular_dados_sempre(sender, **kwargs):
     ]
 
     for nome in materiais_dados:
-        Material.objects.get_or_create(nome=nome.capitalize())
-        print (f"Ingrediente {nome} cadastrado com com sucesso")
+        _,status= (Material.objects.get_or_create(nome=nome.capitalize()))
+        if status:
+            print (f"Ingrediente {nome} cadastrado com com sucesso")
     print ("Ingedientes cadastrados com sucesso")

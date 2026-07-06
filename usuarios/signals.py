@@ -18,8 +18,9 @@ def popular_dados_sempre(sender, **kwargs):
     for tipo in tipos_usuarios:
         # O get_or_create garante que só insere se não existir
         
-        tipo_obj, _ = Tipo.objects.get_or_create(tipo=tipo)
-        print(f"Tipo {tipo} cadastrados com sucesso")
+        _, status = Tipo.objects.get_or_create(tipo=tipo)
+        if status:
+            print(f"Tipo {tipo} cadastrados com sucesso")
     print("Tipos de usuarios cadastrados com sucesso!")
 
 
