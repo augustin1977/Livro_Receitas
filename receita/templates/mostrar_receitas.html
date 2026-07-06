@@ -20,7 +20,18 @@
         {% for receita in ReceitasPessoais %}
         <tr>
             <th scope="row">{{ receita.numero_exibicao }}</th>
-            <td>{{receita.nome}}</td>
+            <td> <button type="button"
+                        class="btn btn-sm btn-link p-0 me-1 btn-favorito"
+                        data-receita-id="{{ receita.id }}"
+                        title="Favoritar receita">
+                    {% if receita.id in favoritos_ids %}
+                        <i class="bi bi-star-fill text-warning"></i>
+                    {% else %}
+                        <i class="bi bi-star text-secondary"></i>
+                    {% endif %}
+                </button>
+                    {{ receita.nome }}
+                </td>
             <td>
                 {% if receita.usuario.get_full_name %}
                     {{ receita.usuario.get_full_name }}
@@ -66,7 +77,20 @@
                 {% for receita in grupo.receitas_filtradas %}
                 <tr>
                     <th scope="row">{{ receita.numero_exibicao }}</th>
-                    <td>{{receita.nome}}</td>
+                    <td><button 
+                            type="button"
+                            class="btn btn-sm btn-link p-0 me-1 btn-favorito"
+                            data-receita-id="{{ receita.id }}"
+                            title="Favoritar receita">
+                            {% if receita.id in favoritos_ids %}
+                                <i class="bi bi-star-fill text-warning"></i>
+                            {% else %}
+                                <i class="bi bi-star text-secondary"></i>
+                            {% endif %}
+                        </button>
+
+                        {{ receita.nome }}
+                    </td>
                     <td>
                         {% if receita.usuario.get_full_name %}
                             {{ receita.usuario.get_full_name }}
@@ -91,4 +115,6 @@
     {% endfor %}
 </div>
 
+{% load static %}
+<script src="{% static 'js/favoritos.js' %}"></script>
 {% endblock %}

@@ -21,6 +21,7 @@ class Receita(models.Model):
     # auto_now_add=True define a data na criação. auto_now=True atualiza a cada edição.
     data_cadastro = models.DateTimeField(auto_now_add=True) 
     usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT)
+    favoritos = models.ManyToManyField(Usuario, related_name="receitas_favoritas", blank=True)
 
     def __str__(self):
         return f"Receita: {self.nome} (Autor: {self.usuario.username})"

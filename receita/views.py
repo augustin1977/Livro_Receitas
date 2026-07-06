@@ -173,9 +173,11 @@ def mostrar_receita(request):
         return redirect("mostrar_receitas")
 
     receita.ingredientes_copy = receita.ingredientes.all()
+    favoritada = receita.favoritos.filter(id=request.user.id).exists()
 
     return render(request, "mostrar_receita.html", {
-        "receita": receita
+        "receita": receita,
+        "favoritada": favoritada,
     })
 
     # 3. Busca os ingredientes vinculados à receita
@@ -206,11 +208,14 @@ def mostrar_receitas(request):
         for receita in grupo.receitas_filtradas:
             receita.numero_exibicao = contador
             contador += 1
-
+    favoritos_ids = set(
+    request.user.receitas_favoritas.values_list("id", flat=True)
+)
     context = {
         'Grupos': grupos,
         'ReceitasPessoais': receitas_pessoais,
-        'usuario':usuario_atual.get_full_name()
+        'usuario':usuario_atual.get_full_name(),
+        "favoritos_ids": favoritos_ids,
     }
     
     return render(request, "mostrar_receitas.html", context)
@@ -395,4 +400,40 @@ def pesquisar_receitas(request):
     return render(request, "pesquisar_receitas.html", {
         "termo": termo,
         "receitas": receitas,
+    })
+
+@usuario
+def favoritar_receita(request, receita_id):
+    if request.method != "POST":
+        return JsonResponse({
+            "sucesso": False,
+            "erro": "Método inválido."
+        }, status=405)
+
+    usuario_atual = request.user
+
+    receita = Receita.objects.filter(
+        Q(id=receita_id) & (
+            Q(usuario=usuario_atual) |
+            Q(usuario__grupos__in=usuario_atual.grupos.all())
+        )
+    ).distinct().first()
+
+    if not receita:
+        return JsonResponse({
+            "sucesso": False,
+            "erro": "Receita não encontrada ou sem permissão."
+        }, status=403)
+
+    if receita.favoritos.filter(id=usuario_atual.id).exists():
+        receita.favoritos.remove(usuario_atual)
+        favoritada = False
+    else:
+        receita.favoritos.add(usuario_atual)
+        favoritada = True
+
+    return JsonResponse({
+        "sucesso": True,
+        "favoritada": favoritada,
+        "total_favoritos": receita.favoritos.count()
     })

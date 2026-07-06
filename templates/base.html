@@ -17,7 +17,8 @@
   </head>
   <body>
     <nav class="navbar navbar-dark bg-dark">
-        <a class="navbar-brand" href="{% url 'home' %}">Livro de Receitas</a>
+        <a class="navbar-brand" href="{% url 'home' %}">Início</a>
+        <a class="navbar-brand" href="{% url 'mostrar_receitas' %}">Livro de Receitas</a>
         {% block 'menu' %} {% endblock %}
         {% if  user.username  %}
         <a class="navbar-brand" href="{% url 'sair' %}">Sair de {{ user.username }}</a>

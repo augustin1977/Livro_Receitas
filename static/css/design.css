@@ -38,3 +38,27 @@ html {
 body { 
     padding-bottom: 60px; 
 }
+
+.titulo-receita {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.btn-favorito {
+    line-height: 1;
+    text-decoration: none;
+}
+
+
+.btn-favorito:hover .icone-favorito {
+    transform: scale(1.15);
+}
+.icone-favorito {
+    font-size: 1.8rem;
+    transition: 0.5s;
+}
+.icone-favorito:hover {
+    transform: scale(1.1);
+}

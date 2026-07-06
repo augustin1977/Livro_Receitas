@@ -8,7 +8,21 @@
 <div class="container mt-4">
     
     <div class="text-center mb-4">
-        <h1 class="display-5">{{ receita.nome }}</h1>
+        <h1 class="display-5 titulo-receita">
+            <span>{{ receita.nome }}</span>
+
+            <button 
+                type="button"
+                class="btn btn-link p-0 ms-2 mt-1 btn-favorito"
+                data-receita-id="{{ receita.id }}"
+                title="Favoritar receita">
+                {% if favoritada %}
+                    <i class="bi bi-star-fill text-warning icone-favorito"></i>
+                {% else %}
+                    <i class="bi bi-star text-secondary icone-favorito"></i>
+                {% endif %}
+            </button>
+        </h1>
         <p class="text-muted">Criado por: {{ receita.usuario.nome }} | Cadastrada em: {{ receita.data_cadastro|date:"d/m/Y" }}</p>
     </div>
 
@@ -40,10 +54,13 @@
             </div>
 
             <div class="mt-4 mb-5">
-                <a href="{% url 'home' %}" class="btn btn-warning">Voltar para o Início</a>
+                <a href="{% url 'mostrar_receitas' %}" class="btn btn-warning">Voltar para o Início</a>
             </div>
 
         </div>
     </div>
 </div>
+
+{% load static %}
+<script src="{% static 'js/favoritos.js' %}"></script>
 {% endblock %}
