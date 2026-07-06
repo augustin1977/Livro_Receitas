@@ -9,6 +9,40 @@ from django.db.models import Prefetch
 from django.contrib import messages 
 from decimal import Decimal
 from django.db.models.functions import Lower
+
+@usuario
+def home(request):
+    usuario_atual = request.user
+
+    total_receitas_pessoais = Receita.objects.filter(usuario=usuario_atual).count()
+
+    grupos_usuario = Grupo.objects.filter(membros=usuario_atual)
+    total_grupos = grupos_usuario.count()
+
+    total_convites = ConviteGrupo.objects.filter(usuario_convidado=usuario_atual).count()
+
+    total_receitas_grupos = Receita.objects.exclude(
+        usuario=usuario_atual
+    ).filter(
+        usuario__grupos__in=grupos_usuario
+    ).distinct().count()
+
+    ultimas_receitas = Receita.objects.filter(
+        Q(usuario=usuario_atual) |
+        Q(usuario__grupos__in=grupos_usuario)
+    ).select_related(
+        "usuario"
+    ).distinct().order_by("-data_cadastro")[:5]
+
+    return render(request, "home.html", {
+        "total_receitas_pessoais": total_receitas_pessoais,
+        "total_receitas_grupos": total_receitas_grupos,
+        "total_grupos": total_grupos,
+        "total_convites": total_convites,
+        "ultimas_receitas": ultimas_receitas,
+    })
+
+
 @usuario
 def cadastrar_receita(request):
     materiais = Material.objects.all().order_by(Lower( 'nome'))
@@ -117,7 +151,7 @@ def mostrar_receita(request):
         receita_id = int(request.GET.get("receita"))
     except (TypeError, ValueError):
         messages.error(request, "Código de receita inválido.")
-        return redirect("home")
+        return redirect("mostrar_receitas")
 
     usuario_atual = request.user
 
@@ -136,7 +170,7 @@ def mostrar_receita(request):
 
     if not receita:
         messages.error(request, "Você não tem permissão para visualizar esta receita.")
-        return redirect("home")
+        return redirect("mostrar_receitas")
 
     receita.ingredientes_copy = receita.ingredientes.all()
 
@@ -150,7 +184,7 @@ def mostrar_receita(request):
 
     return render(request, "mostrar_receita.html", {'receita': receita})
 @usuario
-def home(request):
+def mostrar_receitas(request):
     usuario_atual = request.user
     
     # 1. Busca os dados do banco
@@ -179,7 +213,7 @@ def home(request):
         'usuario':usuario_atual.get_full_name()
     }
     
-    return render(request, "home.html", context)
+    return render(request, "mostrar_receitas.html", context)
 
 @usuario
 def confirmar_exclusao(request):
@@ -189,7 +223,7 @@ def confirmar_exclusao(request):
     except (TypeError, ValueError):
         # Se o parâmetro 'receita' estiver vazio ou não for um número
         messages.error(request, "O código da receita fornecido é inválido.")
-        return redirect('/receita/home/')
+        return redirect('mostrar_receitas')
 
     try:
         # Garante que só o dono possa ver a tela de confirmação
@@ -198,7 +232,7 @@ def confirmar_exclusao(request):
     except Receita.DoesNotExist:
         # Se o ID não existir ou se a receita pertencer a outro usuário
         messages.error(request, "Você não tem permissão para acessar ou excluir esta receita.")
-        return redirect('/receita/home/')
+        return redirect('mostrar_receitas')
 
 
 @usuario
@@ -209,7 +243,7 @@ def excluir_receita(request):
             receita_id = int(request.POST.get('receita_id'))
         except (TypeError, ValueError):
             messages.error(request, "Não foi possível processar a exclusão: código de receita inválido.")
-            return redirect('/receita/home/')
+            return redirect('mostrar_receitas')
 
         try:
             # Trava de segurança no banco de dados
@@ -227,7 +261,7 @@ def excluir_receita(request):
         except Receita.DoesNotExist:
             messages.error(request, "Ação não autorizada. Você só pode excluir receitas criadas por você.")
         
-    return redirect('/receita/home/')
+    return redirect('mostrar_receitas')
 
 @usuario
 def editar_receita(request):
@@ -235,14 +269,14 @@ def editar_receita(request):
         receita_id = int(request.GET.get('receita'))
     except (TypeError, ValueError):
         messages.error(request, "Código de receita inválido.")
-        return redirect('/receita/home/')
+        return redirect('mostrar_receitas')
 
     try:
         # Garante que apenas o dono possa editar a receita
         receita = Receita.objects.get(id=receita_id, usuario=request.user)
     except Receita.DoesNotExist:
         messages.error(request, "Você não tem permissão para editar esta receita.")
-        return redirect('/receita/home/')
+        return redirect('mostrar_receitas')
 
     if request.method == "POST":
         nome = request.POST.get('nome')
@@ -280,7 +314,7 @@ def editar_receita(request):
                 )
 
         messages.success(request, f"Receita '{nome}' atualizada com sucesso!")
-        return redirect('/receita/home/')
+        return redirect('mostrar_receitas')
 
     # Se for GET, renderiza a página trazendo as opções de materiais e unidades
     materiais = Material.objects.all().order_by('nome')
@@ -342,19 +376,21 @@ def pesquisar_receitas(request):
 
     usuario_atual = request.user
     grupos_usuario = usuario_atual.grupos.all()
-
-    receitas = Receita.objects.filter(
-        Q(usuario=usuario_atual) |
-        Q(usuario__grupos__in=grupos_usuario)
-    ).filter(
-        Q(nome__icontains=termo) |
-        Q(usuario__first_name__icontains=termo) |
-        Q(usuario__last_name__icontains=termo) |
-        Q(usuario__username__icontains=termo) |
-        Q(ingredientes__material__nome__icontains=termo)
-    ).select_related(
-        "usuario"
-    ).distinct().order_by("nome")
+    if termo=="":
+        receitas=[]
+    else:
+        receitas = Receita.objects.filter(
+            Q(usuario=usuario_atual) |
+            Q(usuario__grupos__in=grupos_usuario)
+        ).filter(
+            Q(nome__icontains=termo) |
+            Q(usuario__first_name__icontains=termo) |
+            Q(usuario__last_name__icontains=termo) |
+            Q(usuario__username__icontains=termo) |
+            Q(ingredientes__material__nome__icontains=termo)
+        ).select_related(
+            "usuario"
+        ).distinct().order_by("nome")
 
     return render(request, "pesquisar_receitas.html", {
         "termo": termo,

@@ -32,8 +32,11 @@
     </form>
 
 
-        <h5>Resultados para: "{{ termo }}"</h5>
-
+        {% if termo == "" %}
+            <h5>Nenhuma pesquisa</h5> 
+        {% else %}
+            <h5>Resultados para: "{{ termo }}"</h5>
+        {% endif %}
         <table class="table table-hover mt-3">
             <thead>
                 <tr>

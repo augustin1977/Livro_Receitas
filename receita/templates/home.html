@@ -1,94 +1,126 @@
 {% extends 'base.html' %}
-{% block 'titulo' %} Minhas Receitas{% endblock %}
-{% block 'menu'%} 
+{% block 'titulo' %} Início {% endblock %}
+
+{% block 'menu'%}
 {% include 'menu_basico.html' %}
 {% endblock %}
-{% block 'conteudo' %} 
 
-<div class="container mt-4">
-    <h3 class="mb-3">Minhas Receitas Pessoais</h3>
-<table class="table table-hover mb-5">
-    <thead>
-      <tr>
-        <th scope="col">#</th>
-        <th scope="col">Receita</th>
-        <th scope="col">Criador</th>
-        <th scope="col">Data Cadastro</th>
-        <th scope="col">Ações</th> </tr>
-    </thead>
-    <tbody>
-        {% for receita in ReceitasPessoais %}
-        <tr>
-            <th scope="row">{{ receita.numero_exibicao }}</th>
-            <td>{{receita.nome}}</td>
-            <td>
-                {% if receita.usuario.get_full_name %}
-                    {{ receita.usuario.get_full_name }}
-                {% else %}
-                    @{{ receita.usuario.username }}
-                {% endif %}
-            </td>
-            <td>{{receita.data_cadastro|date:"d/m/Y H:i"}}</td>
-            <td>
-              <a href="{% url 'mostrar_receita' %}?receita={{ receita.id }}" class="btn btn-outline-success me-1" title="Visualizar">
-                    <i class="bi bi-file-earmark-text"></i>
-                </a>
-                <a href="{% url 'editar_receita' %}?receita={{ receita.id }}" class="btn btn btn-outline-primary me-1" title="Editar">
-                    <i class="bi bi-pencil"></i>
-                </a>
-                <a href="{% url 'confirmar_exclusao' %}?receita={{ receita.id }}" class="btn btn btn-outline-danger" title="Excluir">
-                    <i class="bi bi-trash"></i>
-                </a>
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="6" class="text-muted">Você ainda não cadastrou nenhuma receita.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+{% block 'conteudo' %}
+<div class="container mt-4 mb-5">
 
-    {% for grupo in Grupos %}
-        <h3 class="mt-4 mb-3">Grupo: {{ grupo.nome }}</h3>
-        <table class="table table-hover mb-5">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Receita</th>
-                <th scope="col">Criador</th>
-                <th scope="col">Data Cadastro</th>
-                <th scope="col">Ações</th> </tr>
-              </tr>
-            </thead>
-            <tbody>
-                {# Acessa a lista que já veio filtrada do banco de dados #}
-                {% for receita in grupo.receitas_filtradas %}
-                <tr>
-                    <th scope="row">{{ receita.numero_exibicao }}</th>
-                    <td>{{receita.nome}}</td>
-                    <td>
-                        {% if receita.usuario.get_full_name %}
-                            {{ receita.usuario.get_full_name }}
-                        {% else %}
-                            @{{ receita.usuario.username }}
-                        {% endif %}
-                    </td>
-                    <td>{{receita.data_cadastro|date:"d/m/Y H:i"}}</td>
-                    <td><a href="{% url 'mostrar_receita' %}?receita={{ receita.id }}" class="btn btn-outline-success me-1" title="Visualizar">
-                    <i class="bi bi-file-earmark-text"></i>
-                </a></td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-muted">Nenhuma receita nova neste grupo.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% empty %}
-        <p class="text-muted">Você não participa de nenhum grupo ainda.</p>
-    {% endfor %}
+    <div class="mb-4">
+        <h2>Olá, {{ request.user.get_full_name|default:request.user.username }}!</h2>
+        <p class="text-muted">
+            Bem-vindo ao seu Livro de Receitas.
+        </p>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-md-3">
+            <a href="{% url 'mostrar_receitas' %}" class="text-decoration-none">
+                <div class="card shadow-sm border-0 bg-primary text-white h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-journal-richtext"></i> Minhas Receitas
+                        </h5>
+                        <h2>{{ total_receitas_pessoais }}</h2>
+                        <p class="mb-0">Receitas cadastradas por você</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{% url 'pesquisar_receitas' %}" class="text-decoration-none">
+                <div class="card shadow-sm border-0 bg-success text-white h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-search"></i> Pesquisar
+                        </h5>
+                        <h2>{{ total_receitas_grupos }}</h2>
+                        <p class="mb-0">Receitas disponíveis nos seus grupos</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{% url 'meus_grupos_administrados' %}" class="text-decoration-none">
+                <div class="card shadow-sm border-0 bg-warning text-dark h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-people-fill"></i> Meus Grupos
+                        </h5>
+                        <h2>{{ total_grupos }}</h2>
+                        <p class="mb-0">Grupos dos quais você participa</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{% url 'meus_convites' %}" class="text-decoration-none">
+                <div class="card shadow-sm border-0 bg-danger text-white h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-envelope-paper"></i> Convites
+                        </h5>
+                        <h2>{{ total_convites }}</h2>
+                        <p class="mb-0">Convites pendentes para grupos</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm mt-5">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-clock-history"></i> Últimas Receitas Disponíveis
+            </h5>
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Receita</th>
+                        <th>Criador</th>
+                        <th>Data</th>
+                        <th class="text-end">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for receita in ultimas_receitas %}
+                    <tr>
+                        <td>{{ receita.nome }}</td>
+                        <td>
+                            {% if receita.usuario.get_full_name %}
+                                {{ receita.usuario.get_full_name }}
+                            {% else %}
+                                @{{ receita.usuario.username }}
+                            {% endif %}
+                        </td>
+                        <td>{{ receita.data_cadastro|date:"d/m/Y H:i" }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'mostrar_receita' %}?receita={{ receita.id }}" class="btn btn-sm btn-outline-success">
+                                Ver
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-muted text-center p-4">
+                            Nenhuma receita disponível ainda.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
-
 {% endblock %}
