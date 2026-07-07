@@ -38,6 +38,6 @@ class LogAtividade(models.Model):
         ordering = ['-data']
 
     def __str__(self):
-        return f"{self.usuario.username} - {self.get_acao_display()} em {self.data}"
+        return f"{self.texto_jornal} em {self.data}"
     
 

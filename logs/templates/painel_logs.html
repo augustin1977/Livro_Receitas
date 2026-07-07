@@ -17,9 +17,9 @@
         <span class="text-muted small">Filtrar por:</span>
         <a href="{% url 'painel_administrador_logs' %}" class="btn btn-sm btn-dark">Todos</a>
         <a href="{% url 'painel_administrador_logs' %}?acao=COMENTAR" class="btn btn-sm btn-outline-dark">Comentários</a>
-        <a href="{% url 'painel_administrador_logs' %}?acao=CRIAR_RECEITA" class="btn btn-sm btn-outline-dark">Novas Receitas</a>
-        <a href="{% url 'painel_administrador_logs' %}?acao=ADICIONAR_MEMBRO" class="btn btn-sm btn-outline-dark">Movimentação de Grupos</a>
-        <a href="{% url 'painel_administrador_logs' %}?acao=DESFAZER_ACAO" class="btn btn-sm btn-outline-dark">Moderações</a>
+        <a href="{% url 'painel_administrador_logs' %}?acao=FAVORITAR" class="btn btn-sm btn-outline-dark">Favoritos</a>
+        {% comment %} <a href="{% url 'painel_administrador_logs' %}?acao=ADICIONAR_MEMBRO" class="btn btn-sm btn-outline-dark">Movimentação de Grupos</a> {% endcomment %}
+        <a href="{% url 'painel_administrador_logs' %}?acao=DESFAZER_ACAO" class="btn btn-sm btn-outline-dark">Desfazer</a>
     </div>
 
     <div class="table-responsive bg-white rounded shadow-sm">
@@ -39,7 +39,7 @@
                     <tr {% if log.foi_desfeito %}class="table-light text-muted" style="text-decoration: line-through;"{% endif %}>
                         <td class="small">{{ log.data|date:"d/m/Y H:i:s" }}</td>
                         <td><strong>{{ log.usuario.username }}</strong></td>
-                        <td><span class="badge bg-secondary opacity-75">{{ log.acao }}</span></td>
+                        <td><span class="badge opacity-75">{{ log.get_acao_display }}</span></td>
                         <td>{{ log.texto_jornal }}</td>
                         <td class="text-center">
                             {% if log.foi_desfeito %}

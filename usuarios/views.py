@@ -218,7 +218,7 @@ def editar(request):
 
 def valida_cadastro(request):
     if request.method != "POST":
-        return redirect('cadastrar_usuario')
+        return redirect('cadastrar')
 
     # 1. Captura os dados do novo formulário
     username = request.POST.get('username', '').strip()

@@ -1,10 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth.models import Group  # Se usar o modelo de grupos padrão do Django
-# Se você tiver um modelo próprio de grupo (ex: Grupo), importe de receita.models ou usuarios.models
 from receita.models import Receita
 from social.models import Comentario
-from usuarios.models import Usuario
+from usuarios.models import Usuario,Grupo
 from .models import LogAtividade
 from autentica import *
 
@@ -23,7 +21,7 @@ def painel_administrador_logs(request):
 def desfazer_acao_log(request, log_id):
     if not (request.user.is_staff or request.user.is_superuser):
         messages.error(request, "Permissão negada.")
-        return redirect('lista_receitas')
+        return redirect('mostrar_receitas')
         
     try:
         log = LogAtividade.objects.get(id=log_id)
@@ -51,20 +49,20 @@ def desfazer_acao_log(request, log_id):
         # 3. Ações de Grupos
         elif log.acao == 'CRIAR_GRUPO':
             # Remove o grupo criado pelo ID salvo
-            Group.objects.filter(id=log.id_objeto_alvo).delete()
+            Grupo.objects.filter(id=log.id_objeto_alvo).delete()
             
         elif log.acao == 'ADICIONAR_MEMBRO':
             # Para remover o membro, precisamos ler os dados que guardamos no log (ID do grupo e ID do usuário)
             # Supondo que id_objeto_alvo seja o ID do grupo e guardamos o ID do usuário em dados_anteriores
             if log.dados_anteriores and 'usuario_id' in log.dados_anteriores:
-                grupo = Group.objects.get(id=log.id_objeto_alvo)
+                grupo = Grupo.objects.get(id=log.id_objeto_alvo)
                 membro = Usuario.objects.get(id=log.dados_anteriores['usuario_id'])
                 grupo.user_set.remove(membro) # Remove o usuário do grupo
                 
         elif log.acao == 'REMOVER_MEMBRO':
             # Devolve o membro ao grupo
             if log.dados_anteriores and 'usuario_id' in log.dados_anteriores:
-                grupo = Group.objects.get(id=log.id_objeto_alvo)
+                grupo = Grupo.objects.get(id=log.id_objeto_alvo)
                 membro = Usuario.objects.get(id=log.dados_anteriores['usuario_id'])
                 grupo.user_set.add(membro)
 
@@ -80,18 +78,16 @@ def desfazer_acao_log(request, log_id):
         # Registra a moderação realizada pelo administrador para auditoria
         from .utils import registrar_log
         
-        # Registra a moderação usando o seu padrão ideal
-        texto_reversao = f"O administrador {request.user.username} desfez a ação: '{log.texto_jornal}'"
         
         registrar_log(
             usuario=request.user,
             acao='DESFAZER_ACAO',
-            texto_jornal=texto_reversao,
+            nome_objeto=log,
             id_objeto_alvo=log.id
         )
 
         messages.success(request, "Ação revertida com sucesso!")
-    except Exception:
-        messages.error(request, "Não foi possível reverter a ação automaticamente. O registro original pode ter sido modificado ou excluído por outro usuário.")
+    except Exception as e :
+        messages.error(request, f"Não foi possível reverter a ação automaticamente. O registro original pode ter sido modificado ou excluído por outro usuário.\n {e}")
         
     return redirect('painel_administrador_logs')

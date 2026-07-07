@@ -132,3 +132,7 @@ body {
 .tooltip-excluir:hover {
     color: #b02a37;
 }
+.dropdown-item:hover, .dropdown-item:focus {
+    background-color: #010509 !important; /* Cor escurecida (padrão Dark do Bootstrap) */
+    color: #fff !important;              /* Garante que o texto fique branco */
+}

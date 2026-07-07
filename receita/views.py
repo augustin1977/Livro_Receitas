@@ -75,7 +75,7 @@ def gerenciar_unidades(request):
 def editar_unidade(request, pk):
     try :
         unidade = Unidade.objects.get(pk=pk)
-        nome_antigo= str(unidade.nome)
+        nome_antigo = str(unidade.unidades)
     except Exception :
         messages.error(request, "Unidade não existe")
         return redirect("gerenciar_unidades")
@@ -312,7 +312,7 @@ def editar_receita(request):
 
         if not nome or not modo_preparo or not ingredientes_string:
             messages.error(request, "Preencha todos os campos da receita.")
-            return redirect(f'/receita/editar-receita/?receita={receita.id}')
+            return redirect(f'/receita/editar/?receita={receita.id}')
 
         # 1. Atualiza os dados principais da receita
         receita.nome = nome
@@ -395,7 +395,7 @@ def excluir_ingrediente(request, pk):
     
     ingrediente.delete()
     return redirect('gerenciar_ingredientes')
-
+@usuario
 def pesquisar_receitas(request):
     termo = request.GET.get("q", "").strip()
     receitas = []
