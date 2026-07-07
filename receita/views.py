@@ -4,6 +4,7 @@ from usuarios.models import *
 from django.db.models import Q
 from django.http import JsonResponse
 from .models import *
+from .selectors import receitas_visiveis_para
 from autentica import *
 from django.db.models import Prefetch
 from django.contrib import messages 
@@ -22,18 +23,13 @@ def home(request):
 
     total_convites = ConviteGrupo.objects.filter(usuario_convidado=usuario_atual).count()
 
-    total_receitas_grupos = Receita.objects.exclude(
+    total_receitas_grupos = receitas_visiveis_para(usuario_atual).exclude(
         usuario=usuario_atual
-    ).filter(
-        usuario__grupos__in=grupos_usuario
-    ).distinct().count()
+    ).count()
 
-    ultimas_receitas = Receita.objects.filter(
-        Q(usuario=usuario_atual) |
-        Q(usuario__grupos__in=grupos_usuario)
-    ).select_related(
+    ultimas_receitas = receitas_visiveis_para(usuario_atual).select_related(
         "usuario"
-    ).distinct().order_by("-data_cadastro")[:5]
+    ).order_by("-data_cadastro")[:5]
 
     return render(request, "home.html", {
         "total_receitas_pessoais": total_receitas_pessoais,
@@ -177,11 +173,8 @@ def mostrar_receita(request):
 
     usuario_atual = request.user
 
-    receita = Receita.objects.filter(
-        Q(id=receita_id) & (
-            Q(usuario=usuario_atual) |
-            Q(usuario__grupos__in=usuario_atual.grupos.all())
-        )
+    receita = receitas_visiveis_para(usuario_atual).filter(
+        id=receita_id
     ).select_related(
         "usuario"
     ).prefetch_related(
@@ -213,7 +206,7 @@ def mostrar_receitas(request):
     
     # 1. Busca os dados do banco
     receitas_pessoais = list(Receita.objects.filter(usuario=usuario_atual).order_by('nome'))
-    receitas_dos_outros = Receita.objects.exclude(usuario=usuario_atual).order_by('nome')
+    receitas_dos_outros = receitas_visiveis_para(usuario_atual).exclude(usuario=usuario_atual).order_by('nome')
     grupos = Grupo.objects.filter(membros=usuario_atual)
     
     # Inicializa o contador global
@@ -402,14 +395,10 @@ def pesquisar_receitas(request):
 
 
     usuario_atual = request.user
-    grupos_usuario = usuario_atual.grupos.all()
     if termo=="":
         receitas=[]
     else:
-        receitas = Receita.objects.filter(
-            Q(usuario=usuario_atual) |
-            Q(usuario__grupos__in=grupos_usuario)
-        ).filter(
+        receitas = receitas_visiveis_para(usuario_atual).filter(
             Q(nome__icontains=termo) |
             Q(usuario__first_name__icontains=termo) |
             Q(usuario__last_name__icontains=termo) |
@@ -434,12 +423,9 @@ def favoritar_receita(request, receita_id):
 
     usuario_atual = request.user
 
-    receita = Receita.objects.filter(
-        Q(id=receita_id) & (
-            Q(usuario=usuario_atual) |
-            Q(usuario__grupos__in=usuario_atual.grupos.all())
-        )
-    ).distinct().first()
+    receita = receitas_visiveis_para(usuario_atual).filter(
+        id=receita_id
+    ).first()
 
     if not receita:
         return JsonResponse({

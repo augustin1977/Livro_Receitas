@@ -13,6 +13,18 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
+
+
+def usuario_e_admin_geral(request):
+    return request.user.is_staff or request.user.is_superuser
+
+
+def usuario_administra_grupo(request, grupo):
+    return usuario_e_admin_geral(request) or grupo.administradores.filter(
+        id=request.user.id
+    ).exists()
+
+
 def login(request):
     # cria a view do login do usuário
     status=str(request.GET.get('status'))
@@ -380,7 +392,7 @@ def adicionar_membro(request, grupo_id):
         return redirect('meus_grupos_administrados')
         
     # Trava de segurança: apenas administradores do grupo ou admin geral
-    if request.user not in grupo.administradores.all() and not request.user.is_staff:
+    if not usuario_administra_grupo(request, grupo):
         messages.error(request, "Permissão negada.")
         return redirect('gerenciar_grupo', grupo_id=grupo.id)
         
@@ -483,7 +495,7 @@ def remover_membro(request, grupo_id, usuario_id):
         return redirect('meus_grupos_administrados')
 
     # Trava de segurança: usa o campo correto 'administradores'
-    if request.user not in grupo.administradores.all() and not request.user.is_staff:
+    if not usuario_administra_grupo(request, grupo):
         messages.error(request, "Você não tem permissão para remover membros deste grupo.")
         return redirect('gerenciar_grupo', grupo_id=grupo.id)
 
@@ -510,7 +522,7 @@ def promover_administrador(request, grupo_id, usuario_id):
         return redirect('meus_grupos_administrados')
 
     # Trava de segurança: apenas administradores do grupo ou admin geral podem promover
-    if request.user not in grupo.administradores.all() and not request.user.is_staff:
+    if not usuario_administra_grupo(request, grupo):
         messages.error(request, "Você não tem permissão para promover membros deste grupo.")
         return redirect('gerenciar_grupo', grupo_id=grupo.id)
 
@@ -539,7 +551,7 @@ def revogar_administrador(request, grupo_id, usuario_id):
         return redirect('meus_grupos_administrados')
 
     # Trava de segurança: apenas administradores do grupo ou admin geral podem revogar
-    if request.user not in grupo.administradores.all():
+    if not usuario_administra_grupo(request, grupo):
         messages.error(request, "Você não tem permissão para alterar privilégios neste grupo.")
         return redirect('gerenciar_grupo', grupo_id=grupo.id)
 
@@ -572,7 +584,7 @@ def excluir_grupo(request, grupo_id):
         return redirect('meus_grupos_administrados')
 
     # Trava de segurança: apenas quem está na lista de administradores do grupo ou admin geral pode deletar
-    if request.user not in grupo.administradores.all():
+    if not usuario_administra_grupo(request, grupo):
         messages.error(request, "Você não tem permissão para excluir este grupo.")
         return redirect('meus_grupos_administrados')
 
