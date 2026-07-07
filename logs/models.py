@@ -1,9 +1,9 @@
 from django.db import models
-
 from usuarios.models import Usuario
 
 
 class LogAtividade(models.Model):
+    
     ACOES_CHOICES = [
         ("CRIAR_RECEITA", "Criou a receita"),
         ("EDITAR_RECEITA", "Editou a receita"),
@@ -36,7 +36,6 @@ class LogAtividade(models.Model):
         ("EXCLUIR_USUARIO", "Excluiu usuario"),
         ("ALTERAR_SENHA", "Alterou a senha de acesso"),
     ]
-
     usuario = models.ForeignKey(
         Usuario,
         null=True,

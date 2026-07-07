@@ -123,10 +123,15 @@ class PainelLogsTests(TestCase):
 
         resposta = self.client.get(
             reverse("painel_administrador_logs"),
-            {"acao": "CRIAR_COMENTARIO"},
+            {"acao": "COMENTARIO"},
         )
 
         self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.context["acao_filtro"], "COMENTARIO")
         logs = list(resposta.context["logs"])
         self.assertEqual(len(logs), 1)
         self.assertEqual(logs[0].acao, "CRIAR_COMENTARIO")
+        self.assertContains(
+            resposta,
+            "acao=COMENTARIO\" class=\"btn btn-sm btn-dark\"",
+        )

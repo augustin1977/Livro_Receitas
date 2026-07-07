@@ -9,4 +9,5 @@ from .models import *
 #    readonly_fields=("nome","email","senha")
 admin.site.register(Tipo)
 admin.site.register(Grupo)
+admin.site.register(ConviteGrupo)
 admin.site.register(Usuario)

@@ -1,61 +1,54 @@
-<div class="dropdown d-inline-block">
-    <a class="navbar-brand dropdown-toggle" href="#" id="dropReceitas" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+<div class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="dropReceitas" role="button" data-bs-toggle="dropdown" aria-expanded="false">
         Receitas
     </a>
-    <div class="dropdown-menu dropdown-menu-dark bg-dark" aria-labelledby="dropReceitas">
-        <a class="dropdown-item text-light" href="{% url 'mostrar_receitas' %}">Minhas Receitas</a>
-        <a class="dropdown-item text-light" href="{% url 'cadastrar_receita' %}">Cadastrar Receita</a>
-        <a class="dropdown-item text-light" href="{% url 'pesquisar_receitas' %}">Pesquisar Receitas</a>
-        <hr class="dropdown-divider border-secondary">
-        <a class="dropdown-item text-light" href="{% url 'gerenciar_ingredientes' %}">Gerenciar Ingredientes</a>
-        <a class="dropdown-item text-light" href="{% url 'gerenciar_unidades' %}">Gerenciar Unidades</a>
-    </div>
+    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropReceitas">
+        <li><a class="dropdown-item" href="{% url 'mostrar_receitas' %}">Minhas Receitas</a></li>
+        <li><a class="dropdown-item" href="{% url 'cadastrar_receita' %}">Cadastrar Receita</a></li>
+        <li><a class="dropdown-item" href="{% url 'pesquisar_receitas' %}">Pesquisar Receitas</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="{% url 'gerenciar_ingredientes' %}">Gerenciar Ingredientes</a></li>
+        <li><a class="dropdown-item" href="{% url 'gerenciar_unidades' %}">Gerenciar Unidades</a></li>
+    </ul>
 </div>
 
-<div class="dropdown d-inline-block">
-    <a class="navbar-brand dropdown-toggle" href="#" id="dropGrupos" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+<div class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="dropGrupos" role="button" data-bs-toggle="dropdown" aria-expanded="false">
         Grupos
     </a>
-    <div class="dropdown-menu dropdown-menu-dark bg-dark" aria-labelledby="dropGrupos">
-        <a class="dropdown-item text-light" href="{% url 'cadastrar_grupo' %}">Criar Grupo</a>
-        <a class="dropdown-item text-light" href="{% url 'meus_grupos_administrados' %}">Gerenciar meus Grupos</a>
-    </div>
+    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropGrupos">
+        <li><a class="dropdown-item" href="{% url 'cadastrar_grupo' %}">Criar Grupo</a></li>
+        <li><a class="dropdown-item" href="{% url 'meus_grupos_administrados' %}">Gerenciar meus Grupos</a></li>
+    </ul>
 </div>
 
-
-<a class="navbar-brand" href="{% url 'meus_convites' %}">
-    Convites 
+<a class="nav-link" href="{% url 'meus_convites' %}">
+    Convites
     {% if total_convites > 0 %}
-        <span class="badge bg-warning text-dark font-monospace" style="font-size: 0.75rem;">
+        <span class="badge text-bg-warning font-monospace" style="font-size: 0.75rem;">
             {{ total_convites }}
         </span>
     {% endif %}
 </a>
 
-
-
 {% if request.user.is_staff %}
-<div class="dropdown d-inline-block">
-    <a class="navbar-brand dropdown-toggle" href="#" id="dropAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-        Administração
-    </a>
-    <div class="dropdown-menu dropdown-menu-dark bg-dark" aria-labelledby="dropAdmin">
-        <a class="dropdown-item text-light" href="{% url 'listar_usuarios' %}">Gerenciar Usuários</a>
-        <a class="dropdown-item text-light" href="{% url 'cadastrar' %}">Cadastrar Usuários</a>
+    <div class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="dropAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Administra&ccedil;&atilde;o
+        </a>
+        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropAdmin">
+            <li><a class="dropdown-item" href="{% url 'listar_usuarios' %}">Gerenciar Usu&aacute;rios</a></li>
+            <li><a class="dropdown-item" href="{% url 'cadastrar' %}">Cadastrar Usu&aacute;rios</a></li>
+        </ul>
     </div>
-</div>
 {% endif %}
 
-
-<a class="navbar-brand" href="{% url 'editar' %}">
+<a class="nav-link" href="{% url 'editar' %}">
     Meu Perfil
 </a>
 
-
 {% if user.is_authenticated and user.is_staff or user.is_superuser %}
-    <li class="nav-item">
-        <a class="nav-link text-warning " href="{% url 'painel_administrador_logs' %}">
-            <i class="bi bi-shield-check me-1"></i>Painel Logs
-        </a>
-    </li>
+    <a class="nav-link text-warning" href="{% url 'painel_administrador_logs' %}">
+        <i class="bi bi-shield-check me-1"></i>Painel Logs
+    </a>
 {% endif %}

@@ -15,11 +15,12 @@
 
     <div class="mb-3 p-3 bg-light rounded d-flex gap-2 align-items-center flex-wrap">
         <span class="text-muted small">Filtrar por:</span>
-        <a href="{% url 'painel_administrador_logs' %}" class="btn btn-sm btn-dark">Todos</a>
-        <a href="{% url 'painel_administrador_logs' %}?acao=CRIAR_RECEITA" class="btn btn-sm btn-outline-dark">Receitas</a>
-        <a href="{% url 'painel_administrador_logs' %}?acao=CRIAR_COMENTARIO" class="btn btn-sm btn-outline-dark">Comentarios</a>
-        <a href="{% url 'painel_administrador_logs' %}?acao=CRIAR_GRUPO" class="btn btn-sm btn-outline-dark">Grupos</a>
-        <a href="{% url 'painel_administrador_logs' %}?acao=CADASTRAR_USUARIO" class="btn btn-sm btn-outline-dark">Usuarios</a>
+        <a href="{% url 'painel_administrador_logs' %}" class="btn btn-sm {% if not acao_filtro %}btn-dark{% else %}btn-outline-dark{% endif %}">Todos</a>
+        <a href="{% url 'painel_administrador_logs' %}?acao=RECEITA" class="btn btn-sm {% if acao_filtro == 'RECEITA' %}btn-dark{% else %}btn-outline-dark{% endif %}">Receitas</a>
+        <a href="{% url 'painel_administrador_logs' %}?acao=COMENTARIO" class="btn btn-sm {% if acao_filtro == 'COMENTARIO' %}btn-dark{% else %}btn-outline-dark{% endif %}">Comentarios</a>
+        <a href="{% url 'painel_administrador_logs' %}?acao=FAVORITOS" class="btn btn-sm {% if acao_filtro == 'FAVORITOS' %}btn-dark{% else %}btn-outline-dark{% endif %}">Favoritos</a>
+        <a href="{% url 'painel_administrador_logs' %}?acao=GRUPO" class="btn btn-sm {% if acao_filtro == 'GRUPO' %}btn-dark{% else %}btn-outline-dark{% endif %}">Grupos</a>
+        <a href="{% url 'painel_administrador_logs' %}?acao=USUARIO" class="btn btn-sm {% if acao_filtro == 'USUARIO' %}btn-dark{% else %}btn-outline-dark{% endif %}">Usuarios</a>
     </div>
 
     <div class="table-responsive bg-white rounded shadow-sm">
