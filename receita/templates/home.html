@@ -86,17 +86,19 @@
             <div class="jornal-item" style="padding: 12px 0; border-bottom: 1px solid #f1f1f1; display: flex; align-items: center; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <span style="font-size: 1.2em;">
-                        {% if "comentou" in atividade.texto_jornal %}
+                        {% if "COMENTARIO" in atividade.acao %}
                             <i class="bi bi-chat-left-text text-muted"></i>
-                        {% elif "publicou" in atividade.texto_jornal or "receita" in atividade.texto_jornal %}
+                        {% elif "RECEITA" in atividade.acao or "INGREDIENTE_RECEITA" in atividade.acao or atividade.acao == "FAVORITAR" %}
                             <i class="bi bi-journal-bookmark text-muted"></i>
-                        {% elif "grupo" in atividade.texto_jornal %}
+                        {% elif "GRUPO" in atividade.acao %}
                             <i class="bi bi-people text-muted"></i>
                         {% else %}
                             <i class="bi bi-lightning text-muted"></i>
                         {% endif %}
                     </span>
-                    <span style="color: #495057;">{{ atividade.texto_jornal }}</span>
+                    <a href="{{ atividade.url }}" style="color: #495057; text-decoration: none;">
+                        {{ atividade.texto }}
+                    </a>
                 </div>
                 <small style="color: #adb5bd; font-variant-numeric: tabular-nums;">
                     {{ atividade.data|date:"H:i" }}

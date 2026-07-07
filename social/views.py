@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils.http import urlencode
 
 from autentica import usuario
+from logs.utils import registrar_log
 from receita.selectors import receitas_visiveis_para
 
 from .models import Comentario
@@ -27,10 +28,17 @@ def adicionar_comentario(request, receita_id):
 
     texto = request.POST.get("texto")
     if texto:
-        Comentario.objects.create(
+        comentario = Comentario.objects.create(
             receita=receita,
             usuario=request.user,
             texto=texto
+        )
+        registrar_log(
+            usuario=request.user,
+            acao="CRIAR_COMENTARIO",
+            id_objeto_alvo=comentario.id,
+            nome_objeto=receita.nome,
+            dados_novos={"texto": texto, "receita_id": receita.id},
         )
 
     return redirecionar_para_receita(receita_id)
@@ -62,8 +70,23 @@ def editar_comentario(request, comentario_id):
 
     novo_texto = request.POST.get("texto")
     if novo_texto:
+        texto_anterior = comentario.texto
         comentario.texto = novo_texto
         comentario.save()
+        registrar_log(
+            usuario=request.user,
+            acao="EDITAR_COMENTARIO",
+            id_objeto_alvo=comentario.id,
+            nome_objeto=comentario.receita.nome,
+            dados_anteriores={
+                "texto": texto_anterior,
+                "receita_id": comentario.receita_id,
+            },
+            dados_novos={
+                "texto": novo_texto,
+                "receita_id": comentario.receita_id,
+            },
+        )
 
     return redirecionar_para_receita(comentario.receita_id)
 
@@ -94,7 +117,17 @@ def excluir_comentario(request, comentario_id):
         return redirecionar_para_receita(comentario.receita_id)
 
     receita_id = comentario.receita_id
+    comentario_id = comentario.id
+    texto_anterior = comentario.texto
+    nome_receita = comentario.receita.nome
     comentario.delete()
+    registrar_log(
+        usuario=request.user,
+        acao="EXCLUIR_COMENTARIO",
+        id_objeto_alvo=comentario_id,
+        nome_objeto=nome_receita,
+        dados_anteriores={"texto": texto_anterior, "receita_id": receita_id},
+    )
 
     messages.success(request, "Comentario removido com sucesso.")
     return redirecionar_para_receita(receita_id)

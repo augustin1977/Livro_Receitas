@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.http import HttpResponse
 from usuarios.models import *
 from django.db.models import Q
@@ -11,7 +12,223 @@ from django.db.models import Prefetch
 from django.contrib import messages 
 from decimal import Decimal
 from django.db.models.functions import Lower
+from logs.models import LogAtividade
 from logs.utils import registrar_log
+
+
+ACOES_JORNAL_HOME = {
+    "CRIAR_RECEITA",
+    "EDITAR_RECEITA",
+    "ADICIONAR_INGREDIENTE_RECEITA",
+    "EDITAR_INGREDIENTE_RECEITA",
+    "REMOVER_INGREDIENTE_RECEITA",
+    "CRIAR_COMENTARIO",
+    "EDITAR_COMENTARIO",
+    "EXCLUIR_COMENTARIO",
+    "FAVORITAR",
+    "CRIAR_GRUPO",
+    "ENVIAR_CONVITE_GRUPO",
+    "ACEITAR_CONVITE_GRUPO",
+}
+
+ACOES_RECEITA_HOME = {
+    "CRIAR_RECEITA",
+    "EDITAR_RECEITA",
+    "ADICIONAR_INGREDIENTE_RECEITA",
+    "EDITAR_INGREDIENTE_RECEITA",
+    "REMOVER_INGREDIENTE_RECEITA",
+    "FAVORITAR",
+}
+
+ACOES_COMENTARIO_HOME = {
+    "CRIAR_COMENTARIO",
+    "EDITAR_COMENTARIO",
+    "EXCLUIR_COMENTARIO",
+}
+
+ACOES_GRUPO_HOME = {
+    "CRIAR_GRUPO",
+    "ENVIAR_CONVITE_GRUPO",
+    "ACEITAR_CONVITE_GRUPO",
+}
+
+
+def url_receita(receita_id):
+    return f"{reverse('mostrar_receita')}?receita={receita_id}"
+
+
+def texto_jornal_home(log, nome):
+    usuario = log.usuario.username if log.usuario else "Alguem"
+
+    textos = {
+        "CRIAR_RECEITA": f"{usuario} publicou a receita '{nome}'",
+        "EDITAR_RECEITA": f"{usuario} editou a receita '{nome}'",
+        "ADICIONAR_INGREDIENTE_RECEITA": f"{usuario} mexeu nos ingredientes da receita '{nome}'",
+        "EDITAR_INGREDIENTE_RECEITA": f"{usuario} mexeu nos ingredientes da receita '{nome}'",
+        "REMOVER_INGREDIENTE_RECEITA": f"{usuario} mexeu nos ingredientes da receita '{nome}'",
+        "CRIAR_COMENTARIO": f"{usuario} comentou na receita '{nome}'",
+        "EDITAR_COMENTARIO": f"{usuario} atualizou um comentario na receita '{nome}'",
+        "EXCLUIR_COMENTARIO": f"{usuario} removeu um comentario da receita '{nome}'",
+        "FAVORITAR": f"{usuario} favoritou a receita '{nome}'",
+        "CRIAR_GRUPO": f"{usuario} criou o grupo '{nome}'",
+        "ENVIAR_CONVITE_GRUPO": f"{usuario} movimentou o grupo '{nome}'",
+        "ACEITAR_CONVITE_GRUPO": f"{usuario} entrou no grupo '{nome}'",
+    }
+    return textos.get(log.acao, log.texto_jornal)
+
+
+def receita_id_do_log(log):
+    if log.acao in ACOES_RECEITA_HOME:
+        return log.id_objeto_alvo
+
+    if log.acao in ACOES_COMENTARIO_HOME:
+        dados = log.dados_novos or log.dados_anteriores or {}
+        return dados.get("receita_id")
+
+    return None
+
+
+def montar_atividade_home(log, receitas_visiveis_ids, grupos_visiveis_ids, admin_geral=False):
+    url = None
+
+    if log.acao in ACOES_RECEITA_HOME or log.acao in ACOES_COMENTARIO_HOME:
+        receita_id = receita_id_do_log(log)
+        if not receita_id:
+            return None
+
+        if not admin_geral and receita_id not in receitas_visiveis_ids:
+            return None
+
+        receita = Receita.objects.filter(id=receita_id).first()
+        if not receita:
+            return None
+
+        url = url_receita(receita_id)
+        nome = receita.nome
+
+    elif log.acao in ACOES_GRUPO_HOME:
+        grupo_id = log.id_objeto_alvo
+        if not grupo_id:
+            return None
+
+        if not admin_geral and grupo_id not in grupos_visiveis_ids:
+            return None
+
+        grupo = Grupo.objects.filter(id=grupo_id).first()
+        if not grupo:
+            return None
+
+        url = reverse("gerenciar_grupo", args=[grupo_id])
+        nome = grupo.nome
+    else:
+        return None
+
+    return {
+        "texto": texto_jornal_home(log, nome),
+        "url": url,
+        "data": log.data,
+        "acao": log.acao,
+    }
+
+
+def atividades_home_para(usuario, limite=10):
+    admin_geral = usuario.is_staff or usuario.is_superuser
+    receitas_visiveis_ids = set()
+    grupos_visiveis_ids = set()
+
+    if not admin_geral:
+        receitas_visiveis_ids = set(
+            receitas_visiveis_para(usuario).values_list("id", flat=True)
+        )
+        grupos_visiveis_ids = set(
+            Grupo.objects.filter(membros=usuario).values_list("id", flat=True)
+        )
+
+    atividades = []
+    logs = LogAtividade.objects.select_related("usuario").filter(
+        acao__in=ACOES_JORNAL_HOME
+    )[:50]
+
+    for log in logs:
+        atividade = montar_atividade_home(
+            log,
+            receitas_visiveis_ids,
+            grupos_visiveis_ids,
+            admin_geral=admin_geral,
+        )
+        if atividade:
+            atividades.append(atividade)
+
+        if len(atividades) == limite:
+            break
+
+    return atividades
+
+
+def dados_auditoria_ingrediente(material, unidade, quantidade):
+    quantidade = Decimal(quantidade)
+    return {
+        "material_id": material.id,
+        "material": material.nome,
+        "unidade_id": unidade.id,
+        "unidade": unidade.unidades,
+        "quantidade": format(quantidade.normalize(), "f"),
+    }
+
+
+def dados_auditoria_ingrediente_existente(ingrediente):
+    return dados_auditoria_ingrediente(
+        ingrediente.material,
+        ingrediente.unidade,
+        ingrediente.quantidade,
+    )
+
+
+def auditar_mudancas_ingredientes_receita(usuario, receita, ingredientes_anteriores, ingredientes_novos):
+    anteriores_por_material = {
+        ingrediente["material_id"]: ingrediente
+        for ingrediente in ingredientes_anteriores
+    }
+    novos_por_material = {
+        ingrediente["material_id"]: ingrediente
+        for ingrediente in ingredientes_novos
+    }
+
+    for material_id, ingrediente_anterior in anteriores_por_material.items():
+        ingrediente_novo = novos_por_material.get(material_id)
+        if not ingrediente_novo:
+            registrar_log(
+                usuario=usuario,
+                acao="REMOVER_INGREDIENTE_RECEITA",
+                id_objeto_alvo=receita.id,
+                nome_objeto=receita.nome,
+                dados_anteriores=ingrediente_anterior,
+            )
+            continue
+
+        if (
+            ingrediente_anterior["quantidade"] != ingrediente_novo["quantidade"] or
+            ingrediente_anterior["unidade_id"] != ingrediente_novo["unidade_id"]
+        ):
+            registrar_log(
+                usuario=usuario,
+                acao="EDITAR_INGREDIENTE_RECEITA",
+                id_objeto_alvo=receita.id,
+                nome_objeto=receita.nome,
+                dados_anteriores=ingrediente_anterior,
+                dados_novos=ingrediente_novo,
+            )
+
+    for material_id, ingrediente_novo in novos_por_material.items():
+        if material_id not in anteriores_por_material:
+            registrar_log(
+                usuario=usuario,
+                acao="ADICIONAR_INGREDIENTE_RECEITA",
+                id_objeto_alvo=receita.id,
+                nome_objeto=receita.nome,
+                dados_novos=ingrediente_novo,
+            )
+
 
 @usuario
 def home(request):
@@ -32,12 +249,15 @@ def home(request):
         "usuario"
     ).order_by("-data_cadastro")[:5]
 
+    atividades_jornal = atividades_home_para(usuario_atual)
+
     return render(request, "home.html", {
         "total_receitas_pessoais": total_receitas_pessoais,
         "total_receitas_grupos": total_receitas_grupos,
         "total_grupos": total_grupos,
         "total_convites": total_convites,
         "ultimas_receitas": ultimas_receitas,
+        "atividades_jornal": atividades_jornal,
     })
     
 @usuario
@@ -116,7 +336,7 @@ def excluir_unidade(request, pk):
         unidade = Unidade.objects.get(pk=pk)
     except:
         messages.error(request, "Unidade não existe")
-        redirect("gerenciar_unidades")
+        return redirect("gerenciar_unidades")
     nome=str(unidade.unidades)
     unidade.delete()
     registrar_log(
@@ -146,6 +366,13 @@ def valida_cadastro_material(request):
             usuario=request.user # Usuário logado vindo do decorator
         )
 
+        registrar_log(
+            usuario=request.user,
+            acao="CRIAR_RECEITA",
+            id_objeto_alvo=nova_receita.id,
+            nome_objeto=nova_receita.nome,
+        )
+
         # 2. Processa o texto dos ingredientes
         # Quebra o texto por linhas
         linhas = ingredientes_string.strip().split('\n')
@@ -171,6 +398,17 @@ def valida_cadastro_material(request):
                     material=material_obj,
                     unidade=unidade_obj,
                     quantidade=quantidade
+                )
+                registrar_log(
+                    usuario=request.user,
+                    acao="ADICIONAR_INGREDIENTE_RECEITA",
+                    id_objeto_alvo=nova_receita.id,
+                    nome_objeto=nova_receita.nome,
+                    dados_novos=dados_auditoria_ingrediente(
+                        material_obj,
+                        unidade_obj,
+                        quantidade,
+                    ),
                 )
 
         messages.success(request, f"Receita '{nome_receita}' cadastrada com sucesso!")
@@ -289,6 +527,12 @@ def excluir_receita(request):
 
             # 2. Apaga a receita
             receita.delete()
+            registrar_log(
+                usuario=request.user,
+                acao="EXCLUIR_RECEITA",
+                id_objeto_alvo=receita_id,
+                nome_objeto=nome_receita,
+            )
 
             # Retorno positivo para o usuário
             messages.success(request, f"A receita '{nome_receita}' foi excluída permanentemente com sucesso.")
@@ -321,13 +565,34 @@ def editar_receita(request):
             messages.error(request, "Preencha todos os campos da receita.")
             return redirect(f'/receita/editar/?receita={receita.id}')
 
+        ingredientes_anteriores = [
+            dados_auditoria_ingrediente_existente(ingrediente)
+            for ingrediente in receita.ingredientes.select_related("material", "unidade")
+        ]
+
         # 1. Atualiza os dados principais da receita
+        dados_anteriores = {
+            "nome": receita.nome,
+            "modo_de_fazer": receita.modo_de_fazer,
+        }
         receita.nome = nome
         receita.modo_de_fazer = modo_preparo
         receita.save()
+        registrar_log(
+            usuario=request.user,
+            acao="EDITAR_RECEITA",
+            id_objeto_alvo=receita.id,
+            nome_objeto=receita.nome,
+            dados_anteriores=dados_anteriores,
+            dados_novos={
+                "nome": nome,
+                "modo_de_fazer": modo_preparo,
+            },
+        )
 
         # 2. Remove os ingredientes antigos para evitar duplicidade ou lixo no banco
         Ingrediente.objects.filter(receita=receita).delete()
+        ingredientes_novos = []
 
         # 3. Insere a nova lista atualizada vinda do formulário
         linhas = ingredientes_string.strip().split('\n')
@@ -340,12 +605,29 @@ def editar_receita(request):
                 quantidade = Decimal(partes[1].replace(',', '.'))
                 unidade_id = int(partes[2])
 
+                material_obj = Material.objects.get(id=material_id)
+                unidade_obj = Unidade.objects.get(id=unidade_id)
+
                 Ingrediente.objects.create(
                     receita=receita,
-                    material_id=material_id,
-                    unidade_id=unidade_id,
+                    material=material_obj,
+                    unidade=unidade_obj,
                     quantidade=quantidade
                 )
+                ingredientes_novos.append(
+                    dados_auditoria_ingrediente(
+                        material_obj,
+                        unidade_obj,
+                        quantidade,
+                    )
+                )
+
+        auditar_mudancas_ingredientes_receita(
+            request.user,
+            receita,
+            ingredientes_anteriores,
+            ingredientes_novos,
+        )
 
         messages.success(request, f"Receita '{nome}' atualizada com sucesso!")
         return redirect('mostrar_receitas')
@@ -369,7 +651,13 @@ def gerenciar_ingredientes(request):
                 messages.error(request, "Este ingrediente ja esta cadastrado.")
                 return redirect('gerenciar_ingredientes')
 
-            Material.objects.create(nome=nome)
+            material = Material.objects.create(nome=nome)
+            registrar_log(
+                usuario=request.user,
+                acao="CRIAR_MATERIAL",
+                id_objeto_alvo=material.id,
+                nome_objeto=material.nome,
+            )
         return redirect('gerenciar_ingredientes')
 
     ingredientes = Material.objects.all().order_by(Lower('nome'))
@@ -394,8 +682,16 @@ def editar_ingrediente(request, pk):
                 messages.error(request, "Este ingrediente ja esta cadastrado.")
                 return redirect('gerenciar_ingredientes')
 
+            nome_antigo = ingrediente.nome
             ingrediente.nome = nome
             ingrediente.save()
+            registrar_log(
+                usuario=request.user,
+                acao="EDITAR_MATERIAL",
+                id_objeto_alvo=ingrediente.id,
+                nome_objeto=ingrediente.nome,
+                dados_anteriores={"nome": nome_antigo},
+            )
         return redirect('gerenciar_ingredientes')
         
     ingredientes = Material.objects.all().order_by(Lower('nome'))
@@ -412,7 +708,15 @@ def excluir_ingrediente(request, pk):
         messages.error(request, "Ingrediente não existe")
         return redirect("gerenciar_ingredientes")
     
+    nome = ingrediente.nome
+    ingrediente_id = ingrediente.id
     ingrediente.delete()
+    registrar_log(
+        usuario=request.user,
+        acao="EXCLUIR_MATERIAL",
+        id_objeto_alvo=ingrediente_id,
+        nome_objeto=nome,
+    )
     return redirect('gerenciar_ingredientes')
 @usuario
 def pesquisar_receitas(request):
@@ -462,9 +766,21 @@ def favoritar_receita(request, receita_id):
     if receita.favoritos.filter(id=usuario_atual.id).exists():
         receita.favoritos.remove(usuario_atual)
         favoritada = False
+        registrar_log(
+            usuario=usuario_atual,
+            acao="DESFAVORITAR",
+            id_objeto_alvo=receita.id,
+            nome_objeto=receita.nome,
+        )
     else:
         receita.favoritos.add(usuario_atual)
         favoritada = True
+        registrar_log(
+            usuario=usuario_atual,
+            acao="FAVORITAR",
+            id_objeto_alvo=receita.id,
+            nome_objeto=receita.nome,
+        )
 
     return JsonResponse({
         "sucesso": True,

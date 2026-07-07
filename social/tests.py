@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from receita.models import Receita
 from usuarios.models import Grupo
+from logs.models import LogAtividade
 
 from .models import Comentario
 
@@ -45,6 +46,9 @@ class ComentarioPermissaoTests(TestCase):
                 texto="Ficou otima.",
             ).exists()
         )
+        log = LogAtividade.objects.get(acao="CRIAR_COMENTARIO")
+        self.assertIn("Ficou otima.", log.texto_jornal)
+        self.assertIn(self.receita_bruno.nome, log.texto_jornal)
 
     def test_usuario_nao_comenta_receita_invisivel(self):
         self.client.force_login(self.alice)
@@ -78,6 +82,9 @@ class ComentarioPermissaoTests(TestCase):
         comentario.refresh_from_db()
         self.assertEqual(resposta.status_code, 302)
         self.assertEqual(comentario.texto, "Depois")
+        log = LogAtividade.objects.get(acao="EDITAR_COMENTARIO")
+        self.assertIn("Antes", log.texto_jornal)
+        self.assertIn("Depois", log.texto_jornal)
 
     def test_usuario_nao_edita_comentario_de_outra_pessoa(self):
         comentario = Comentario.objects.create(

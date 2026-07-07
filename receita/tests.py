@@ -1,11 +1,14 @@
+from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
 
 from usuarios.models import Grupo
+from logs.models import LogAtividade
 
-from .models import Material, Receita, Unidade
+from .models import Ingrediente, Material, Receita, Unidade
 from .selectors import receitas_visiveis_para
 from .utils import (
     nomes_equivalentes,
@@ -64,6 +67,72 @@ class ReceitasVisiveisParaTests(TestCase):
 
         self.assertEqual(resposta.status_code, 403)
         self.assertFalse(self.receita_clara.favoritos.filter(id=self.alice.id).exists())
+
+
+class HomeAtividadesJornalTests(TestCase):
+    def setUp(self):
+        Usuario = get_user_model()
+        self.alice = Usuario.objects.create_user(username="alice", password="senha123")
+        self.bruno = Usuario.objects.create_user(username="bruno", password="senha123")
+        self.clara = Usuario.objects.create_user(username="clara", password="senha123")
+
+        self.grupo = Grupo.objects.create(nome="Familia")
+        self.grupo.membros.add(self.alice, self.bruno)
+
+    def test_home_mostra_ultimas_10_atividades_da_rede(self):
+        for indice in range(12):
+            receita = Receita.objects.create(
+                nome=f"Receita {indice}",
+                modo_de_fazer="Prepare.",
+                usuario=self.bruno,
+            )
+            LogAtividade.objects.create(
+                usuario=self.bruno,
+                acao="CRIAR_RECEITA",
+                texto_jornal=f"bruno criou a receita {indice}",
+                id_objeto_alvo=receita.id,
+                dados_novos={"receita_id": receita.id},
+            )
+
+        self.client.force_login(self.alice)
+        resposta = self.client.get(reverse("home"))
+
+        atividades = list(resposta.context["atividades_jornal"])
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(len(atividades), 10)
+        self.assertTrue(all(atividade["url"] for atividade in atividades))
+        self.assertTrue(all("publicou a receita" in atividade["texto"] for atividade in atividades))
+
+    def test_home_nao_mostra_atividade_de_usuario_fora_da_rede(self):
+        receita_visivel = Receita.objects.create(
+            nome="Receita visivel",
+            modo_de_fazer="Prepare.",
+            usuario=self.bruno,
+        )
+        receita_invisivel = Receita.objects.create(
+            nome="Receita invisivel",
+            modo_de_fazer="Prepare.",
+            usuario=self.clara,
+        )
+        LogAtividade.objects.create(
+            usuario=self.bruno,
+            acao="CRIAR_RECEITA",
+            texto_jornal="bruno criou a receita visivel",
+            id_objeto_alvo=receita_visivel.id,
+        )
+        LogAtividade.objects.create(
+            usuario=self.clara,
+            acao="CRIAR_RECEITA",
+            texto_jornal="clara criou a receita invisivel",
+            id_objeto_alvo=receita_invisivel.id,
+        )
+
+        self.client.force_login(self.alice)
+        resposta = self.client.get(reverse("home"))
+
+        textos = [atividade["texto"] for atividade in resposta.context["atividades_jornal"]]
+        self.assertIn("bruno publicou a receita 'Receita visivel'", textos)
+        self.assertNotIn("clara publicou a receita 'Receita invisivel'", textos)
 
 
 class CatalogoReceitaTests(TestCase):
@@ -162,3 +231,85 @@ class CatalogoReceitaTests(TestCase):
 
         with self.assertRaises(IntegrityError), transaction.atomic():
             Material.objects.create(nome="  ingrediente banco  ")
+
+
+class AuditoriaIngredientesReceitaTests(TestCase):
+    def setUp(self):
+        Usuario = get_user_model()
+        self.usuario = Usuario.objects.create_user(
+            username="alice",
+            password="senha123",
+        )
+        self.client.force_login(self.usuario)
+        self.unidade = Unidade.objects.create(unidades="Grama teste")
+        self.xicara = Unidade.objects.create(unidades="Xicara teste")
+        self.acucar = Material.objects.create(nome="Acucar teste")
+        self.sal = Material.objects.create(nome="Sal teste")
+        self.receita = Receita.objects.create(
+            nome="Bolo teste",
+            modo_de_fazer="Misture.",
+            usuario=self.usuario,
+        )
+        Ingrediente.objects.create(
+            receita=self.receita,
+            material=self.acucar,
+            unidade=self.unidade,
+            quantidade=Decimal("100"),
+        )
+
+    def test_audita_ingrediente_adicionado_na_edicao_da_receita(self):
+        ingredientes = (
+            f"{self.acucar.id};100;{self.unidade.id}\n"
+            f"{self.sal.id};1;{self.xicara.id}"
+        )
+
+        resposta = self.client.post(
+            f"{reverse('editar_receita')}?receita={self.receita.id}",
+            {
+                "nome": self.receita.nome,
+                "ModoPreparo": self.receita.modo_de_fazer,
+                "IngredientesSelecionados": ingredientes,
+            },
+        )
+
+        self.assertEqual(resposta.status_code, 302)
+        log = LogAtividade.objects.get(acao="ADICIONAR_INGREDIENTE_RECEITA")
+        self.assertIn("Sal teste", log.texto_jornal)
+        self.assertIn("1", log.texto_jornal)
+        self.assertIn("Xicara teste", log.texto_jornal)
+
+    def test_audita_ingrediente_removido_na_edicao_da_receita(self):
+        ingredientes = f"{self.sal.id};1;{self.xicara.id}"
+
+        resposta = self.client.post(
+            f"{reverse('editar_receita')}?receita={self.receita.id}",
+            {
+                "nome": self.receita.nome,
+                "ModoPreparo": self.receita.modo_de_fazer,
+                "IngredientesSelecionados": ingredientes,
+            },
+        )
+
+        self.assertEqual(resposta.status_code, 302)
+        log = LogAtividade.objects.get(acao="REMOVER_INGREDIENTE_RECEITA")
+        self.assertIn("Acucar teste", log.texto_jornal)
+        self.assertIn("100", log.texto_jornal)
+        self.assertIn("Grama teste", log.texto_jornal)
+
+    def test_audita_ingrediente_alterado_na_edicao_da_receita(self):
+        ingredientes = f"{self.acucar.id};2;{self.xicara.id}"
+
+        resposta = self.client.post(
+            f"{reverse('editar_receita')}?receita={self.receita.id}",
+            {
+                "nome": self.receita.nome,
+                "ModoPreparo": self.receita.modo_de_fazer,
+                "IngredientesSelecionados": ingredientes,
+            },
+        )
+
+        self.assertEqual(resposta.status_code, 302)
+        log = LogAtividade.objects.get(acao="EDITAR_INGREDIENTE_RECEITA")
+        self.assertIn("Acucar teste", log.texto_jornal)
+        self.assertIn("100 Grama teste", log.texto_jornal)
+        self.assertIn("2 Xicara teste", log.texto_jornal)

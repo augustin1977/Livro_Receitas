@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
+from logs.utils import registrar_log
 
 
 def usuario_e_admin_geral(request):
@@ -51,6 +52,12 @@ def alterar_senha(request):
         request.user.set_password(nova_senha)
         request.user.deve_trocar_senha = False
         request.user.save()
+        registrar_log(
+            usuario=request.user,
+            acao="ALTERAR_SENHA",
+            id_objeto_alvo=request.user.id,
+            nome_objeto=request.user.username,
+        )
 
         login_django(request, request.user)
 
@@ -73,6 +80,12 @@ def esqueci_senha(request):
         usuario.set_password(senha_provisoria)
         usuario.deve_trocar_senha = True
         usuario.save()
+        registrar_log(
+            usuario=usuario,
+            acao="ALTERAR_SENHA",
+            id_objeto_alvo=usuario.id,
+            nome_objeto=usuario.username,
+        )
 
         send_mail(
             "Senha provisória - Livro de Receitas",
@@ -107,6 +120,12 @@ def trocar_senha_obrigatoria(request):
         request.user.set_password(nova_senha)
         request.user.deve_trocar_senha = False
         request.user.save()
+        registrar_log(
+            usuario=request.user,
+            acao="ALTERAR_SENHA",
+            id_objeto_alvo=request.user.id,
+            nome_objeto=request.user.username,
+        )
 
         login_django(request, request.user)
 
@@ -130,6 +149,12 @@ def excluir_conta(request):
             return redirect("excluir_conta")
 
         usuario = request.user
+        registrar_log(
+            usuario=usuario,
+            acao="EXCLUIR_USUARIO",
+            id_objeto_alvo=usuario.id,
+            nome_objeto=usuario.username,
+        )
 
         receitas = Receita.objects.filter(usuario=usuario)
         Ingrediente.objects.filter(receita__in=receitas).delete()
@@ -170,6 +195,12 @@ def excluir_usuario_admin(request, usuario_id):
         usuario_alvo.convites_recebidos.all().delete()
 
         nome = usuario_alvo.username
+        registrar_log(
+            usuario=request.user,
+            acao="EXCLUIR_USUARIO",
+            id_objeto_alvo=usuario_alvo.id,
+            nome_objeto=nome,
+        )
         usuario_alvo.delete()
 
         messages.success(request, f"Usuário '{nome}' excluído com sucesso.")
@@ -204,6 +235,12 @@ def editar(request):
             messages.error(request, "Este e-mail já está em uso.")
             return redirect("editar")
 
+        dados_anteriores = {
+            "username": usuario_logado.username,
+            "first_name": usuario_logado.first_name,
+            "last_name": usuario_logado.last_name,
+            "email": usuario_logado.email,
+        }
         partes_nome = nome_completo.split()
         usuario_logado.username = username
         usuario_logado.first_name = partes_nome[0]
@@ -214,6 +251,13 @@ def editar(request):
             usuario_logado.set_password(senha)
 
         usuario_logado.save()
+        registrar_log(
+            usuario=usuario_logado,
+            acao="EDITAR_USUARIO",
+            id_objeto_alvo=usuario_logado.id,
+            nome_objeto=usuario_logado.username,
+            dados_anteriores=dados_anteriores,
+        )
 
         if senha:
             login_django(request, usuario_logado)
@@ -290,6 +334,12 @@ def valida_cadastro(request):
             password=senha,
             tipo=tipo_padrao
         )
+        registrar_log(
+            usuario=novo_usuario,
+            acao="CADASTRAR_USUARIO",
+            id_objeto_alvo=novo_usuario.id,
+            nome_objeto=novo_usuario.username,
+        )
 
         try:
             grupo_padrao = Grupo.objects.get(nome="Sem_Familia")
@@ -359,6 +409,12 @@ def cadastrar_grupo(request):
         # Adiciona o criador como membro e como administrador
         novo_grupo.membros.add(request.user)
         novo_grupo.administradores.add(request.user)
+        registrar_log(
+            usuario=request.user,
+            acao="CRIAR_GRUPO",
+            id_objeto_alvo=novo_grupo.id,
+            nome_objeto=novo_grupo.nome,
+        )
         
         messages.success(request, f"Grupo '{nome_grupo}' criado com sucesso! Agora você pode adicionar membros.")
         return redirect('gerenciar_grupo', grupo_id=novo_grupo.id)
@@ -419,7 +475,14 @@ def adicionar_membro(request, grupo_id):
         return redirect('gerenciar_grupo', grupo_id=grupo.id)
         
     # Em vez de adicionar direto, cria o convite pendente
-    ConviteGrupo.objects.create(grupo=grupo, usuario_convidado=usuario_alvo)
+    convite = ConviteGrupo.objects.create(grupo=grupo, usuario_convidado=usuario_alvo)
+    registrar_log(
+        usuario=request.user,
+        acao="ENVIAR_CONVITE_GRUPO",
+        id_objeto_alvo=convite.id,
+        nome_objeto=grupo.nome,
+        dados_anteriores={"usuario_convidado_id": usuario_alvo.id},
+    )
     messages.success(request, f"Convite enviado para '{usuario_alvo.username}'. Aguardando aprovação dele.")
     return redirect('gerenciar_grupo', grupo_id=grupo.id)
 
@@ -438,8 +501,22 @@ def responder_convite(request, convite_id, acao):
 
     if acao == 'aceitar':
         convite.grupo.membros.add(request.user)
+        registrar_log(
+            usuario=request.user,
+            acao="ACEITAR_CONVITE_GRUPO",
+            id_objeto_alvo=convite.grupo.id,
+            nome_objeto=convite.grupo.nome,
+            dados_anteriores={"convite_id": convite.id},
+        )
         messages.success(request, f"Você agora faz parte do grupo '{convite.grupo.nome}'!")
     else:
+        registrar_log(
+            usuario=request.user,
+            acao="RECUSAR_CONVITE_GRUPO",
+            id_objeto_alvo=convite.grupo.id,
+            nome_objeto=convite.grupo.nome,
+            dados_anteriores={"convite_id": convite.id},
+        )
         messages.info(request, f"Convite para o grupo '{convite.grupo.nome}' recusado.")
         
     # Apaga o convite do banco após processar a decisão
@@ -473,6 +550,20 @@ def sair_do_grupo(request, grupo_id):
             return redirect('gerenciar_grupo', grupo_id=grupo.id)
         # Se ele for o único membro do grupo inteiro, o grupo será deletado automaticamente ao sair
         else:
+            grupo_id_excluido = grupo.id
+            nome_grupo = grupo.nome
+            registrar_log(
+                usuario=request.user,
+                acao="SAIR_GRUPO",
+                id_objeto_alvo=grupo_id_excluido,
+                nome_objeto=nome_grupo,
+            )
+            registrar_log(
+                usuario=request.user,
+                acao="EXCLUIR_GRUPO",
+                id_objeto_alvo=grupo_id_excluido,
+                nome_objeto=nome_grupo,
+            )
             grupo.delete()
             messages.success(request, f"Você saiu e o grupo '{grupo.nome}' foi desfeito por estar vazio.")
             return redirect('meus_grupos_administrados')
@@ -481,6 +572,12 @@ def sair_do_grupo(request, grupo_id):
     grupo.membros.remove(request.user)
     if request.user in grupo.administradores.all():
         grupo.administradores.remove(request.user)
+    registrar_log(
+        usuario=request.user,
+        acao="SAIR_GRUPO",
+        id_objeto_alvo=grupo.id,
+        nome_objeto=grupo.nome,
+    )
 
     messages.success(request, f"Você saiu do grupo '{grupo.nome}' com sucesso.")
     return redirect('meus_grupos_administrados')
@@ -508,6 +605,13 @@ def remover_membro(request, grupo_id, usuario_id):
     grupo.membros.remove(usuario_alvo)
     if usuario_alvo in grupo.administradores.all():
         grupo.administradores.remove(usuario_alvo)
+    registrar_log(
+        usuario=request.user,
+        acao="REMOVER_MEMBRO",
+        id_objeto_alvo=grupo.id,
+        nome_objeto=grupo.nome,
+        dados_anteriores={"usuario_id": usuario_alvo.id},
+    )
 
     messages.success(request, f"Usuário '{usuario_alvo.username}' foi removido do grupo.")
     return redirect('gerenciar_grupo', grupo_id=grupo.id)
@@ -538,6 +642,13 @@ def promover_administrador(request, grupo_id, usuario_id):
 
     # Adiciona à lista de administradores
     grupo.administradores.add(usuario_alvo)
+    registrar_log(
+        usuario=request.user,
+        acao="PROMOVER_ADMIN_GRUPO",
+        id_objeto_alvo=grupo.id,
+        nome_objeto=grupo.nome,
+        dados_anteriores={"usuario_id": usuario_alvo.id},
+    )
 
     messages.success(request, f"Usuário '{usuario_alvo.username}' agora também é administrador do grupo!")
     return redirect('gerenciar_grupo', grupo_id=grupo.id)
@@ -567,6 +678,13 @@ def revogar_administrador(request, grupo_id, usuario_id):
 
     # Remove da lista de administradores (mas ele continua sendo membro comum do grupo)
     grupo.administradores.remove(usuario_alvo)
+    registrar_log(
+        usuario=request.user,
+        acao="REVOGAR_ADMIN_GRUPO",
+        id_objeto_alvo=grupo.id,
+        nome_objeto=grupo.nome,
+        dados_anteriores={"usuario_id": usuario_alvo.id},
+    )
 
     messages.success(request, f"Os privilégios de administrador de '{usuario_alvo.username}' foram revogados.")
     
@@ -589,12 +707,19 @@ def excluir_grupo(request, grupo_id):
         return redirect('meus_grupos_administrados')
 
     nome_grupo = grupo.nome
+    grupo_id_excluido = grupo.id
         # Remove todos os vínculos de membros e administradores antes de apagar (boa prática do Django)
     grupo.membros.clear()
     grupo.administradores.clear()
     
     # Deleta o grupo definitivamente
     grupo.delete()
+    registrar_log(
+        usuario=request.user,
+        acao="EXCLUIR_GRUPO",
+        id_objeto_alvo=grupo_id_excluido,
+        nome_objeto=nome_grupo,
+    )
 
     messages.success(request, f"O grupo '{nome_grupo}' foi excluído permanentemente.")
     return redirect('meus_grupos_administrados')

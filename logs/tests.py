@@ -28,13 +28,64 @@ class RegistrarLogTests(TestCase):
         self.assertEqual(log.acao, "CRIAR_RECEITA")
         self.assertEqual(log.id_objeto_alvo, 10)
         self.assertEqual(log.dados_anteriores, {"nome": "Bolo antigo"})
+        self.assertIsNone(log.dados_novos)
         self.assertIn("alice", log.texto_jornal)
         self.assertIn("Bolo simples", log.texto_jornal)
 
+    def test_registrar_log_descreve_edicao_de_receita(self):
+        registrar_log(
+            usuario=self.usuario,
+            acao="EDITAR_RECEITA",
+            id_objeto_alvo=10,
+            nome_objeto="Agua quente",
+            dados_anteriores={
+                "nome": "Agua morna",
+                "modo_de_fazer": "Aquecer pouco.",
+            },
+            dados_novos={
+                "nome": "Agua quente",
+                "modo_de_fazer": "Aquecer ate ferver.",
+            },
+        )
+
+        log = LogAtividade.objects.get()
+        self.assertIn("nome mudou de 'Agua morna' para 'Agua quente'", log.texto_jornal)
+        self.assertIn(
+            "modo de preparo mudou de 'Aquecer pouco.' para 'Aquecer ate ferver.'",
+            log.texto_jornal,
+        )
+
+    def test_registrar_log_descreve_conteudo_do_comentario(self):
+        registrar_log(
+            usuario=self.usuario,
+            acao="CRIAR_COMENTARIO",
+            id_objeto_alvo=10,
+            nome_objeto="Agua quente",
+            dados_novos={"texto": "Ficou muito boa."},
+        )
+
+        log = LogAtividade.objects.get()
+        self.assertIn("Agua quente", log.texto_jornal)
+        self.assertIn("Ficou muito boa.", log.texto_jornal)
+
     def test_registrar_log_ignora_usuario_vazio(self):
-        registrar_log(usuario=None, acao="LOGIN")
+        registrar_log(usuario=None, acao="CRIAR_RECEITA")
 
         self.assertEqual(LogAtividade.objects.count(), 0)
+
+    def test_log_permanece_quando_usuario_e_excluido(self):
+        registrar_log(
+            usuario=self.usuario,
+            acao="CRIAR_RECEITA",
+            id_objeto_alvo=10,
+            nome_objeto="Bolo simples",
+        )
+
+        self.usuario.delete()
+
+        log = LogAtividade.objects.get()
+        self.assertIsNone(log.usuario)
+        self.assertIn("alice", log.texto_jornal)
 
 
 class PainelLogsTests(TestCase):
@@ -51,13 +102,13 @@ class PainelLogsTests(TestCase):
         )
         LogAtividade.objects.create(
             usuario=self.admin,
-            acao="LOGIN",
-            texto_jornal="admin entrou no sistema",
+            acao="CRIAR_RECEITA",
+            texto_jornal="admin criou a receita",
         )
         LogAtividade.objects.create(
             usuario=self.admin,
-            acao="COMENTAR",
-            texto_jornal="admin comentou na receita",
+            acao="CRIAR_COMENTARIO",
+            texto_jornal="admin criou o comentario",
         )
 
     def test_usuario_comum_nao_acessa_painel_de_logs(self):
@@ -72,10 +123,10 @@ class PainelLogsTests(TestCase):
 
         resposta = self.client.get(
             reverse("painel_administrador_logs"),
-            {"acao": "COMENTAR"},
+            {"acao": "CRIAR_COMENTARIO"},
         )
 
         self.assertEqual(resposta.status_code, 200)
         logs = list(resposta.context["logs"])
         self.assertEqual(len(logs), 1)
-        self.assertEqual(logs[0].acao, "COMENTAR")
+        self.assertEqual(logs[0].acao, "CRIAR_COMENTARIO")

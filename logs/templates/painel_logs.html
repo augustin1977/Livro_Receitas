@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% block 'titulo' %} LOGS {% endblock %}
 
-{% block 'menu'%} 
+{% block 'menu'%}
 {% include 'menu_basico.html' %}
 {% endblock %}
 
-{% block 'conteudo' %} 
+{% block 'conteudo' %}
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -16,54 +16,41 @@
     <div class="mb-3 p-3 bg-light rounded d-flex gap-2 align-items-center flex-wrap">
         <span class="text-muted small">Filtrar por:</span>
         <a href="{% url 'painel_administrador_logs' %}" class="btn btn-sm btn-dark">Todos</a>
-        <a href="{% url 'painel_administrador_logs' %}?acao=COMENTAR" class="btn btn-sm btn-outline-dark">Comentários</a>
-        <a href="{% url 'painel_administrador_logs' %}?acao=FAVORITAR" class="btn btn-sm btn-outline-dark">Favoritos</a>
-        {% comment %} <a href="{% url 'painel_administrador_logs' %}?acao=ADICIONAR_MEMBRO" class="btn btn-sm btn-outline-dark">Movimentação de Grupos</a> {% endcomment %}
-        <a href="{% url 'painel_administrador_logs' %}?acao=DESFAZER_ACAO" class="btn btn-sm btn-outline-dark">Desfazer</a>
+        <a href="{% url 'painel_administrador_logs' %}?acao=CRIAR_RECEITA" class="btn btn-sm btn-outline-dark">Receitas</a>
+        <a href="{% url 'painel_administrador_logs' %}?acao=CRIAR_COMENTARIO" class="btn btn-sm btn-outline-dark">Comentarios</a>
+        <a href="{% url 'painel_administrador_logs' %}?acao=CRIAR_GRUPO" class="btn btn-sm btn-outline-dark">Grupos</a>
+        <a href="{% url 'painel_administrador_logs' %}?acao=CADASTRAR_USUARIO" class="btn btn-sm btn-outline-dark">Usuarios</a>
     </div>
 
     <div class="table-responsive bg-white rounded shadow-sm">
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
-                    <th style="width: 15%">Data / Hora</th>
-                    <th style="width: 15%">Usuário</th>
-                    <th style="width: 15%">Ação Base</th>
-                    <th>Descrição Geral</th>
-                    <th style="width: 10%" class="text-center">Status</th>
-                    <th style="width: 10%" class="text-center">Ações</th>
+                    <th style="width: 18%">Data / Hora</th>
+                    <th style="width: 16%">Usuario</th>
+                    <th style="width: 18%">Acao</th>
+                    <th>Descricao Geral</th>
                 </tr>
             </thead>
             <tbody>
                 {% for log in logs %}
-                    <tr {% if log.foi_desfeito %}class="table-light text-muted" style="text-decoration: line-through;"{% endif %}>
+                    <tr>
                         <td class="small">{{ log.data|date:"d/m/Y H:i:s" }}</td>
-                        <td><strong>{{ log.usuario.username }}</strong></td>
+                        <td>
+                            <strong>
+                                {% if log.usuario %}
+                                    {{ log.usuario.username }}
+                                {% else %}
+                                    Usuario removido
+                                {% endif %}
+                            </strong>
+                        </td>
                         <td><span class="badge opacity-75">{{ log.get_acao_display }}</span></td>
                         <td>{{ log.texto_jornal }}</td>
-                        <td class="text-center">
-                            {% if log.foi_desfeito %}
-                                <span class="badge bg-danger">Revertido</span>
-                            {% else %}
-                                <span class="badge bg-success">Ativo</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">
-                            {% if not log.foi_desfeito and log.acao != 'DESFAZER_ACAO' and log.acao != 'LOGIN' and log.acao != 'LOGOUT' %}
-                                <a href="{% url 'desfazer_acao_log' log.id %}" 
-                                   class="tooltip-social tooltip-excluir" 
-                                   data-texto="Desfazer esta ação"
-                                   onclick="return confirm('Tem certeza que deseja reverter e anular os efeitos desta ação no sistema?');">
-                                    <i class="bi bi-arrow-counterclockwise"></i>
-                                </a>
-                            {% else %}
-                                <span class="text-muted small">-</span>
-                            {% endif %}
-                        </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">Nenhum registro de atividade encontrado.</td>
+                        <td colspan="4" class="text-center py-4 text-muted">Nenhum registro de atividade encontrado.</td>
                     </tr>
                 {% endfor %}
             </tbody>
