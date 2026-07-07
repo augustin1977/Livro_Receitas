@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from .models import *
 from .selectors import receitas_visiveis_para
+from .utils import existe_nome_equivalente, normalizar_nome_catalogo
 from autentica import *
 from django.db.models import Prefetch
 from django.contrib import messages 
@@ -53,9 +54,13 @@ def cadastrar_receita(request):
 @admin_geral
 def gerenciar_unidades(request):
     if request.method == 'POST':
-        nome = request.POST.get('nome_unidade')
+        nome = normalizar_nome_catalogo(request.POST.get('nome_unidade'))
         if nome:
-            unidade = Unidade(unidades=nome.capitalize())
+            if existe_nome_equivalente(Unidade, "unidades", nome):
+                messages.error(request, "Esta unidade ja esta cadastrada.")
+                return redirect('gerenciar_unidades')
+
+            unidade = Unidade(unidades=nome)
             unidade.save()
             usuario=request.user
             registrar_log(usuario=usuario,
@@ -77,9 +82,18 @@ def editar_unidade(request, pk):
         return redirect("gerenciar_unidades")
     
     if request.method == 'POST':
-        nome = request.POST.get('nome_unidade')
+        nome = normalizar_nome_catalogo(request.POST.get('nome_unidade'))
         if nome:
-            unidade.unidades = nome.capitalize()
+            if existe_nome_equivalente(
+                Unidade,
+                "unidades",
+                nome,
+                pk_ignorado=unidade.pk,
+            ):
+                messages.error(request, "Esta unidade ja esta cadastrada.")
+                return redirect('gerenciar_unidades')
+
+            unidade.unidades = nome
             unidade.save()
             registrar_log(
                         usuario=request.user, 
@@ -349,9 +363,13 @@ def editar_receita(request):
 @admin_geral
 def gerenciar_ingredientes(request):
     if request.method == 'POST':
-        nome = request.POST.get('nome_ingrediente')
+        nome = normalizar_nome_catalogo(request.POST.get('nome_ingrediente'))
         if nome:
-            Material.objects.create(nome=nome.capitalize())
+            if existe_nome_equivalente(Material, "nome", nome):
+                messages.error(request, "Este ingrediente ja esta cadastrado.")
+                return redirect('gerenciar_ingredientes')
+
+            Material.objects.create(nome=nome)
         return redirect('gerenciar_ingredientes')
 
     ingredientes = Material.objects.all().order_by(Lower('nome'))
@@ -364,11 +382,19 @@ def editar_ingrediente(request, pk):
     except:
         messages.error(request, "Ingrediente não existe")
         return redirect("gerenciar_ingredientes")
-    print(ingrediente)  
     if request.method == 'POST':
-        nome = request.POST.get('nome_ingrediente')
+        nome = normalizar_nome_catalogo(request.POST.get('nome_ingrediente'))
         if nome:
-            ingrediente.nome = nome.capitalize()
+            if existe_nome_equivalente(
+                Material,
+                "nome",
+                nome,
+                pk_ignorado=ingrediente.pk,
+            ):
+                messages.error(request, "Este ingrediente ja esta cadastrado.")
+                return redirect('gerenciar_ingredientes')
+
+            ingrediente.nome = nome
             ingrediente.save()
         return redirect('gerenciar_ingredientes')
         

@@ -10,6 +10,7 @@ def popular_dados_sempre(sender, **kwargs):
 
     # Importamos os modelos aqui dentro para evitar problemas de carregamento do Django
     from .models import Unidade, Material
+    from .utils import existe_nome_equivalente, normalizar_nome_catalogo
 
     # 1. Lista de Unidades
     print("Carregando unidades basicas de culinária.")
@@ -31,7 +32,11 @@ def popular_dados_sempre(sender, **kwargs):
 
     for unidades in unidades_dados:
         # O get_or_create garante que só insere se não existir
-        _, status =Unidade.objects.get_or_create(unidades=unidades.capitalize())
+        unidades = normalizar_nome_catalogo(unidades)
+        status = False
+        if not existe_nome_equivalente(Unidade, "unidades", unidades):
+            Unidade.objects.create(unidades=unidades)
+            status = True
         if status:
             print (f"unidade {unidades} Criada com sucesso")
     print ("Unidades de medida cadastrados com sucesso!")
@@ -63,7 +68,6 @@ def popular_dados_sempre(sender, **kwargs):
         "Polvilho Doce",
         "Polvilho Azedo",
         "Mostarda",
-        "Mel",
         "Picanha",
         "Alcatra",
         "Contra Filé",
@@ -75,7 +79,11 @@ def popular_dados_sempre(sender, **kwargs):
     ]
 
     for nome in materiais_dados:
-        _,status= (Material.objects.get_or_create(nome=nome.capitalize()))
+        nome = normalizar_nome_catalogo(nome)
+        status = False
+        if not existe_nome_equivalente(Material, "nome", nome):
+            Material.objects.create(nome=nome)
+            status = True
         if status:
             print (f"Ingrediente {nome} cadastrado com com sucesso")
     print ("Ingedientes cadastrados com sucesso")
