@@ -79,8 +79,8 @@ class HomeAtividadesJornalTests(TestCase):
         self.grupo = Grupo.objects.create(nome="Familia")
         self.grupo.membros.add(self.alice, self.bruno)
 
-    def test_home_mostra_ultimas_10_atividades_da_rede(self):
-        for indice in range(12):
+    def test_home_mostra_ultimas_5_atividades_da_rede(self):
+        for indice in range(7):
             receita = Receita.objects.create(
                 nome=f"Receita {indice}",
                 modo_de_fazer="Prepare.",
@@ -99,7 +99,7 @@ class HomeAtividadesJornalTests(TestCase):
 
         atividades = list(resposta.context["atividades_jornal"])
         self.assertEqual(resposta.status_code, 200)
-        self.assertEqual(len(atividades), 10)
+        self.assertEqual(len(atividades), 5)
         self.assertTrue(all(atividade["url"] for atividade in atividades))
         self.assertTrue(all("publicou a receita" in atividade["texto"] for atividade in atividades))
 
@@ -133,6 +133,52 @@ class HomeAtividadesJornalTests(TestCase):
         textos = [atividade["texto"] for atividade in resposta.context["atividades_jornal"]]
         self.assertIn("bruno publicou a receita 'Receita visivel'", textos)
         self.assertNotIn("clara publicou a receita 'Receita invisivel'", textos)
+
+    def test_home_nao_usa_permissao_admin_para_mostrar_feed_global(self):
+        Usuario = get_user_model()
+        admin = Usuario.objects.create_user(
+            username="admin",
+            password="senha123",
+            is_staff=True,
+        )
+        receita_invisivel = Receita.objects.create(
+            nome="Receita distante",
+            modo_de_fazer="Prepare.",
+            usuario=self.clara,
+        )
+        LogAtividade.objects.create(
+            usuario=self.clara,
+            acao="CRIAR_RECEITA",
+            texto_jornal="clara criou a receita distante",
+            id_objeto_alvo=receita_invisivel.id,
+        )
+
+        self.client.force_login(admin)
+        resposta = self.client.get(reverse("home"))
+
+        textos = [atividade["texto"] for atividade in resposta.context["atividades_jornal"]]
+        self.assertNotIn("clara publicou a receita 'Receita distante'", textos)
+
+    def test_home_ignora_grupo_tecnico_sem_familia_no_feed(self):
+        grupo_tecnico = Grupo.objects.create(nome="Sem_Familia")
+        grupo_tecnico.membros.add(self.alice, self.clara)
+        receita_invisivel = Receita.objects.create(
+            nome="Receita do grupo tecnico",
+            modo_de_fazer="Prepare.",
+            usuario=self.clara,
+        )
+        LogAtividade.objects.create(
+            usuario=self.clara,
+            acao="CRIAR_RECEITA",
+            texto_jornal="clara criou a receita do grupo tecnico",
+            id_objeto_alvo=receita_invisivel.id,
+        )
+
+        self.client.force_login(self.alice)
+        resposta = self.client.get(reverse("home"))
+
+        textos = [atividade["texto"] for atividade in resposta.context["atividades_jornal"]]
+        self.assertNotIn("clara publicou a receita 'Receita do grupo tecnico'", textos)
 
 
 class CatalogoReceitaTests(TestCase):

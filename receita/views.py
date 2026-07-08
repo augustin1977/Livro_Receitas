@@ -52,6 +52,23 @@ ACOES_GRUPO_HOME = {
     "ACEITAR_CONVITE_GRUPO",
 }
 
+NOME_GRUPO_TECNICO_SEM_FAMILIA = "Sem_Familia"
+
+
+def grupos_sociais_do_usuario(usuario):
+    return Grupo.objects.filter(membros=usuario).exclude(
+        nome=NOME_GRUPO_TECNICO_SEM_FAMILIA
+    )
+
+
+def usuarios_da_rede_home_ids(usuario):
+    grupos_usuario = grupos_sociais_do_usuario(usuario)
+    usuarios_ids = set(
+        Usuario.objects.filter(grupos__in=grupos_usuario).values_list("id", flat=True)
+    )
+    usuarios_ids.add(usuario.id)
+    return usuarios_ids
+
 
 def url_receita(receita_id):
     return f"{reverse('mostrar_receita')}?receita={receita_id}"
@@ -88,7 +105,7 @@ def receita_id_do_log(log):
     return None
 
 
-def montar_atividade_home(log, receitas_visiveis_ids, grupos_visiveis_ids, admin_geral=False):
+def montar_atividade_home(log, receitas_visiveis_ids, grupos_visiveis_ids):
     url = None
 
     if log.acao in ACOES_RECEITA_HOME or log.acao in ACOES_COMENTARIO_HOME:
@@ -96,7 +113,7 @@ def montar_atividade_home(log, receitas_visiveis_ids, grupos_visiveis_ids, admin
         if not receita_id:
             return None
 
-        if not admin_geral and receita_id not in receitas_visiveis_ids:
+        if receita_id not in receitas_visiveis_ids:
             return None
 
         receita = Receita.objects.filter(id=receita_id).first()
@@ -111,7 +128,7 @@ def montar_atividade_home(log, receitas_visiveis_ids, grupos_visiveis_ids, admin
         if not grupo_id:
             return None
 
-        if not admin_geral and grupo_id not in grupos_visiveis_ids:
+        if grupo_id not in grupos_visiveis_ids:
             return None
 
         grupo = Grupo.objects.filter(id=grupo_id).first()
@@ -131,22 +148,19 @@ def montar_atividade_home(log, receitas_visiveis_ids, grupos_visiveis_ids, admin
     }
 
 
-def atividades_home_para(usuario, limite=10):
-    admin_geral = usuario.is_staff or usuario.is_superuser
-    receitas_visiveis_ids = set()
-    grupos_visiveis_ids = set()
-
-    if not admin_geral:
-        receitas_visiveis_ids = set(
-            receitas_visiveis_para(usuario).values_list("id", flat=True)
-        )
-        grupos_visiveis_ids = set(
-            Grupo.objects.filter(membros=usuario).values_list("id", flat=True)
-        )
+def atividades_home_para(usuario, limite=5):
+    usuarios_rede_ids = usuarios_da_rede_home_ids(usuario)
+    receitas_visiveis_ids = set(
+        receitas_visiveis_para(usuario).values_list("id", flat=True)
+    )
+    grupos_visiveis_ids = set(
+        grupos_sociais_do_usuario(usuario).values_list("id", flat=True)
+    )
 
     atividades = []
     logs = LogAtividade.objects.select_related("usuario").filter(
-        acao__in=ACOES_JORNAL_HOME
+        acao__in=ACOES_JORNAL_HOME,
+        usuario_id__in=usuarios_rede_ids,
     )[:50]
 
     for log in logs:
@@ -154,7 +168,6 @@ def atividades_home_para(usuario, limite=10):
             log,
             receitas_visiveis_ids,
             grupos_visiveis_ids,
-            admin_geral=admin_geral,
         )
         if atividade:
             atividades.append(atividade)
