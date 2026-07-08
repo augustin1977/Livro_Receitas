@@ -12,8 +12,8 @@
       <tr>
         <th scope="col">#</th>
         <th scope="col">Receita</th>
-        <th scope="col">Criador</th>
-        <th scope="col">Data Cadastro</th>
+        <th scope="col">Dono</th>
+        <th scope="col">Data original</th>
         <th scope="col">Ações</th> </tr>
     </thead>
     <tbody>
@@ -67,8 +67,8 @@
               <tr>
                 <th scope="col">#</th>
                 <th scope="col">Receita</th>
-                <th scope="col">Criador</th>
-                <th scope="col">Data Cadastro</th>
+                <th scope="col">Dono</th>
+                <th scope="col">Data original</th>
                 <th scope="col">Ações</th> </tr>
               </tr>
             </thead>
@@ -99,9 +99,17 @@
                         {% endif %}
                     </td>
                     <td>{{receita.data_cadastro|date:"d/m/Y H:i"}}</td>
-                    <td><a href="{% url 'mostrar_receita' %}?receita={{ receita.id }}" class="btn btn-outline-success me-1" title="Visualizar">
-                    <i class="bi bi-file-earmark-text"></i>
-                </a></td>
+                    <td>
+                        <a href="{% url 'mostrar_receita' %}?receita={{ receita.id }}" class="btn btn-outline-success me-1" title="Visualizar">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </a>
+                        <form method="post" action="{% url 'copiar_receita' receita.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-primary" title="Copiar para minhas receitas">
+                                <i class="bi bi-copy"></i>
+                            </button>
+                        </form>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>

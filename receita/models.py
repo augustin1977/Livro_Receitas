@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models.functions import Lower, Trim
+from django.utils import timezone
 from usuarios.models import Usuario
 
 class Unidade(models.Model):
@@ -34,9 +35,20 @@ class Material(models.Model):
 class Receita(models.Model):
     nome = models.CharField(max_length=150)
     modo_de_fazer = models.TextField()
-    data_cadastro = models.DateTimeField(auto_now_add=True) 
+    data_cadastro = models.DateTimeField(default=timezone.now)
+    data_ultima_modificacao = models.DateTimeField(auto_now=True)
     usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT)
+    criador_original = models.ForeignKey(
+        Usuario,
+        on_delete=models.PROTECT,
+        related_name="receitas_criadas_originalmente",
+    )
     favoritos = models.ManyToManyField(Usuario, related_name="receitas_favoritas", blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.criador_original_id:
+            self.criador_original_id = self.usuario_id
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Receita: {self.nome} (Autor: {self.usuario.username})"

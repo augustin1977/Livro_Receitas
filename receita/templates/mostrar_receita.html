@@ -23,7 +23,33 @@
                 {% endif %}
             </button>
         </h1>
-        <p class="text-muted">Criado por: {{ receita.usuario.nome }} | Cadastrada em: {{ receita.data_cadastro|date:"d/m/Y" }}</p>
+        <p class="text-muted mb-1">
+            {% if receita.usuario_id == receita.criador_original_id %}
+                Criada por:
+                {% if receita.criador_original.get_full_name %}
+                    {{ receita.criador_original.get_full_name }}
+                {% else %}
+                    @{{ receita.criador_original.username }}
+                {% endif %}
+            {% else %}
+                C&oacute;pia pertencente a:
+                {% if receita.usuario.get_full_name %}
+                    {{ receita.usuario.get_full_name }}
+                {% else %}
+                    @{{ receita.usuario.username }}
+                {% endif %}
+                | Receita original de:
+                {% if receita.criador_original.get_full_name %}
+                    {{ receita.criador_original.get_full_name }}
+                {% else %}
+                    @{{ receita.criador_original.username }}
+                {% endif %}
+            {% endif %}
+        </p>
+        <p class="text-muted small">
+            Data original: {{ receita.data_cadastro|date:"d/m/Y H:i" }}
+            | &Uacute;ltima modifica&ccedil;&atilde;o: {{ receita.data_ultima_modificacao|date:"d/m/Y H:i" }}
+        </p>
     </div>
 
     <hr>
@@ -54,6 +80,14 @@
             </div>
 
             <div class="mt-4 mb-5">
+                {% if receita.usuario != request.user %}
+                    <form method="post" action="{% url 'copiar_receita' receita.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-copy"></i> Copiar receita
+                        </button>
+                    </form>
+                {% endif %}
                 <a href="{% url 'mostrar_receitas' %}" class="btn btn-warning">Voltar para o Início</a>
             </div>
 

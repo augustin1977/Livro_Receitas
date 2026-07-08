@@ -120,8 +120,8 @@
                 <thead>
                     <tr>
                         <th>Receita</th>
-                        <th>Criador</th>
-                        <th>Data</th>
+                        <th>Criador original</th>
+                        <th>Data original</th>
                         <th class="text-end">Ação</th>
                     </tr>
                 </thead>
@@ -130,10 +130,10 @@
                     <tr>
                         <td>{{ receita.nome }}</td>
                         <td>
-                            {% if receita.usuario.get_full_name %}
-                                {{ receita.usuario.get_full_name }}
+                            {% if receita.criador_original.get_full_name %}
+                                {{ receita.criador_original.get_full_name }}
                             {% else %}
-                                @{{ receita.usuario.username }}
+                                @{{ receita.criador_original.username }}
                             {% endif %}
                         </td>
                         <td>{{ receita.data_cadastro|date:"d/m/Y H:i" }}</td>

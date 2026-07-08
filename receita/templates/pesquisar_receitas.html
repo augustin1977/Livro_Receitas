@@ -41,8 +41,8 @@
             <thead>
                 <tr>
                     <th>Receita</th>
-                    <th>Criador</th>
-                    <th>Data Cadastro</th>
+                    <th>Criador original</th>
+                    <th>Data original</th>
                     <th class="text-end">Ações</th>
                 </tr>
             </thead>
@@ -51,10 +51,10 @@
                 <tr>
                     <td>{{ receita.nome }}</td>
                     <td>
-                        {% if receita.usuario.get_full_name %}
-                            {{ receita.usuario.get_full_name }}
+                        {% if receita.criador_original.get_full_name %}
+                            {{ receita.criador_original.get_full_name }}
                         {% else %}
-                            @{{ receita.usuario.username }}
+                            @{{ receita.criador_original.username }}
                         {% endif %}
                     </td>
                     <td>{{ receita.data_cadastro|date:"d/m/Y H:i" }}</td>
@@ -70,6 +70,13 @@
                             <a href="{% url 'confirmar_exclusao' %}?receita={{ receita.id }}" class="btn btn-sm btn-outline-danger" title="Excluir">
                                 <i class="bi bi-trash"></i>
                             </a>
+                        {% else %}
+                            <form method="post" action="{% url 'copiar_receita' receita.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Copiar para minhas receitas">
+                                    <i class="bi bi-copy"></i>
+                                </button>
+                            </form>
                         {% endif %}
                     </td>
                 </tr>

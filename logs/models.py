@@ -6,6 +6,7 @@ class LogAtividade(models.Model):
     
     ACOES_CHOICES = [
         ("CRIAR_RECEITA", "Criou a receita"),
+        ("COPIAR_RECEITA", "Copiou a receita"),
         ("EDITAR_RECEITA", "Editou a receita"),
         ("EXCLUIR_RECEITA", "Excluiu a receita"),
         ("ADICIONAR_INGREDIENTE_RECEITA", "Adicionou ingrediente na receita"),

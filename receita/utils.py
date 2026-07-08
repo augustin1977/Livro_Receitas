@@ -1,6 +1,19 @@
 import unicodedata
 
 
+def normalizar_nome_para_ordenacao(valor):
+    if valor is None:
+        return ""
+
+    texto = str(valor).strip().casefold()
+    texto = unicodedata.normalize("NFKD", texto)
+    texto = "".join(
+        caractere for caractere in texto
+        if not unicodedata.combining(caractere)
+    )
+    return " ".join(texto.split())
+
+
 def normalizar_nome_catalogo(valor):
     if valor is None:
         return ""
@@ -13,13 +26,17 @@ def normalizar_nome_para_comparacao(valor):
     if valor is None:
         return ""
 
-    texto = str(valor).strip().lower()
-    texto = unicodedata.normalize("NFKD", texto)
-    texto = "".join(
-        caractere for caractere in texto
-        if not unicodedata.combining(caractere)
-    )
+    texto = normalizar_nome_para_ordenacao(valor)
     return "".join(texto.split())
+
+
+def ordenar_objetos_por_nome(objetos, campo):
+    return sorted(
+        objetos,
+        key=lambda objeto: normalizar_nome_para_ordenacao(
+            getattr(objeto, campo)
+        ),
+    )
 
 
 def nomes_equivalentes(nome_a, nome_b):

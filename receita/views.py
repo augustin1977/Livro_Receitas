@@ -6,18 +6,24 @@ from django.db.models import Q
 from django.http import JsonResponse
 from .models import *
 from .selectors import receitas_visiveis_para
-from .utils import existe_nome_equivalente, normalizar_nome_catalogo
+from .utils import (
+    existe_nome_equivalente,
+    normalizar_nome_catalogo,
+    ordenar_objetos_por_nome,
+)
 from autentica import *
 from django.db.models import Prefetch
 from django.contrib import messages 
 from decimal import Decimal
-from django.db.models.functions import Lower
+from django.db import transaction
+from django.views.decorators.http import require_POST
 from logs.models import LogAtividade
 from logs.utils import registrar_log
 
 
 ACOES_JORNAL_HOME = {
     "CRIAR_RECEITA",
+    "COPIAR_RECEITA",
     "EDITAR_RECEITA",
     "ADICIONAR_INGREDIENTE_RECEITA",
     "EDITAR_INGREDIENTE_RECEITA",
@@ -33,6 +39,7 @@ ACOES_JORNAL_HOME = {
 
 ACOES_RECEITA_HOME = {
     "CRIAR_RECEITA",
+    "COPIAR_RECEITA",
     "EDITAR_RECEITA",
     "ADICIONAR_INGREDIENTE_RECEITA",
     "EDITAR_INGREDIENTE_RECEITA",
@@ -79,6 +86,7 @@ def texto_jornal_home(log, nome):
 
     textos = {
         "CRIAR_RECEITA": f"{usuario} publicou a receita '{nome}'",
+        "COPIAR_RECEITA": f"{usuario} copiou a receita '{nome}'",
         "EDITAR_RECEITA": f"{usuario} editou a receita '{nome}'",
         "ADICIONAR_INGREDIENTE_RECEITA": f"{usuario} mexeu nos ingredientes da receita '{nome}'",
         "EDITAR_INGREDIENTE_RECEITA": f"{usuario} mexeu nos ingredientes da receita '{nome}'",
@@ -259,8 +267,9 @@ def home(request):
     ).count()
 
     ultimas_receitas = receitas_visiveis_para(usuario_atual).select_related(
-        "usuario"
-    ).order_by("-data_cadastro")[:5]
+        "usuario",
+        "criador_original",
+    ).order_by("-data_ultima_modificacao")[:5]
 
     atividades_jornal = atividades_home_para(usuario_atual)
 
@@ -275,8 +284,8 @@ def home(request):
     
 @usuario
 def cadastrar_receita(request):
-    materiais = Material.objects.all().order_by(Lower( 'nome'))
-    unidades = Unidade.objects.all().order_by(Lower('unidades'))
+    materiais = ordenar_objetos_por_nome(Material.objects.all(), "nome")
+    unidades = ordenar_objetos_por_nome(Unidade.objects.all(), "unidades")
     
     context = {
         'materiais': materiais,
@@ -302,7 +311,7 @@ def gerenciar_unidades(request):
                     nome_objeto=unidade.unidades)
         return redirect('gerenciar_unidades')
 
-    unidades = Unidade.objects.all().order_by(Lower('unidades'))
+    unidades = ordenar_objetos_por_nome(Unidade.objects.all(), "unidades")
     return render(request, 'gerenciar_unidades.html', {'unidades': unidades})
 
 @admin_geral
@@ -337,7 +346,7 @@ def editar_unidade(request, pk):
                     )
         return redirect('gerenciar_unidades')
         
-    unidades = Unidade.objects.all().order_by(Lower('unidades'))
+    unidades = ordenar_objetos_por_nome(Unidade.objects.all(), "unidades")
     return render(request, 'gerenciar_unidades.html', {
         'unidades': unidades,
         'unidade_editando': unidade
@@ -376,7 +385,8 @@ def valida_cadastro_material(request):
         nova_receita = Receita.objects.create(
             nome=nome_receita,
             modo_de_fazer=modo_preparo,
-            usuario=request.user # Usuário logado vindo do decorator
+            usuario=request.user, # Usuário logado vindo do decorator
+            criador_original=request.user,
         )
 
         registrar_log(
@@ -428,6 +438,63 @@ def valida_cadastro_material(request):
         return redirect('home')
 
     return redirect('home')
+
+
+@usuario
+@require_POST
+def copiar_receita(request, receita_id):
+    receita_original = receitas_visiveis_para(request.user).filter(
+        id=receita_id
+    ).select_related(
+        "usuario",
+        "criador_original",
+    ).prefetch_related(
+        "ingredientes",
+    ).first()
+
+    if not receita_original:
+        messages.error(request, "Voce nao tem permissao para copiar esta receita.")
+        return redirect("mostrar_receitas")
+
+    if receita_original.usuario_id == request.user.id:
+        messages.error(request, "Esta receita ja pertence a voce.")
+        return redirect("mostrar_receitas")
+
+    with transaction.atomic():
+        nova_receita = Receita.objects.create(
+            nome=receita_original.nome,
+            modo_de_fazer=receita_original.modo_de_fazer,
+            data_cadastro=receita_original.data_cadastro,
+            usuario=request.user,
+            criador_original=receita_original.criador_original,
+        )
+        Ingrediente.objects.bulk_create([
+            Ingrediente(
+                receita=nova_receita,
+                material=ingrediente.material,
+                unidade=ingrediente.unidade,
+                quantidade=ingrediente.quantidade,
+            )
+            for ingrediente in receita_original.ingredientes.all()
+        ])
+        registrar_log(
+            usuario=request.user,
+            acao="COPIAR_RECEITA",
+            id_objeto_alvo=nova_receita.id,
+            nome_objeto=nova_receita.nome,
+            dados_novos={
+                "receita_origem_id": receita_original.id,
+                "criador_original_id": receita_original.criador_original_id,
+            },
+        )
+
+    messages.success(
+        request,
+        f"A receita '{nova_receita.nome}' foi copiada para as suas receitas.",
+    )
+    return redirect(f"{reverse('mostrar_receita')}?receita={nova_receita.id}")
+
+
 @usuario
 def mostrar_receita(request):
     try:
@@ -441,7 +508,8 @@ def mostrar_receita(request):
     receita = receitas_visiveis_para(usuario_atual).filter(
         id=receita_id
     ).select_related(
-        "usuario"
+        "usuario",
+        "criador_original",
     ).prefetch_related(
         "ingredientes",
         "ingredientes__material",
@@ -470,8 +538,18 @@ def mostrar_receitas(request):
     usuario_atual = request.user
     
     # 1. Busca os dados do banco
-    receitas_pessoais = list(Receita.objects.filter(usuario=usuario_atual).order_by('nome'))
-    receitas_dos_outros = receitas_visiveis_para(usuario_atual).exclude(usuario=usuario_atual).order_by('nome')
+    receitas_pessoais = list(
+        Receita.objects.filter(usuario=usuario_atual).select_related(
+            "usuario",
+            "criador_original"
+        ).order_by("nome")
+    )
+    receitas_dos_outros = receitas_visiveis_para(usuario_atual).exclude(
+        usuario=usuario_atual
+    ).select_related(
+        "usuario",
+        "criador_original"
+    ).order_by("nome")
     grupos = Grupo.objects.filter(membros=usuario_atual)
     
     # Inicializa o contador global
@@ -646,8 +724,8 @@ def editar_receita(request):
         return redirect('mostrar_receitas')
 
     # Se for GET, renderiza a página trazendo as opções de materiais e unidades
-    materiais = Material.objects.all().order_by('nome')
-    unidades = Unidade.objects.all().order_by('unidades')
+    materiais = ordenar_objetos_por_nome(Material.objects.all(), "nome")
+    unidades = ordenar_objetos_por_nome(Unidade.objects.all(), "unidades")
     
     context = {
         'receita': receita,
@@ -673,7 +751,7 @@ def gerenciar_ingredientes(request):
             )
         return redirect('gerenciar_ingredientes')
 
-    ingredientes = Material.objects.all().order_by(Lower('nome'))
+    ingredientes = ordenar_objetos_por_nome(Material.objects.all(), "nome")
     return render(request, 'gerenciar_ingredientes.html', {'ingredientes': ingredientes})
 
 @admin_geral
@@ -707,7 +785,7 @@ def editar_ingrediente(request, pk):
             )
         return redirect('gerenciar_ingredientes')
         
-    ingredientes = Material.objects.all().order_by(Lower('nome'))
+    ingredientes = ordenar_objetos_por_nome(Material.objects.all(), "nome")
     return render(request, 'gerenciar_ingredientes.html', {
         'ingredientes': ingredientes,
         'ingrediente_editando': ingrediente
@@ -746,9 +824,13 @@ def pesquisar_receitas(request):
             Q(usuario__first_name__icontains=termo) |
             Q(usuario__last_name__icontains=termo) |
             Q(usuario__username__icontains=termo) |
+            Q(criador_original__first_name__icontains=termo) |
+            Q(criador_original__last_name__icontains=termo) |
+            Q(criador_original__username__icontains=termo) |
             Q(ingredientes__material__nome__icontains=termo)
         ).select_related(
-            "usuario"
+            "usuario",
+            "criador_original",
         ).distinct().order_by("nome")
 
     return render(request, "pesquisar_receitas.html", {
