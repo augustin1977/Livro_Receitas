@@ -74,31 +74,33 @@ def esqueci_senha(request):
         except Usuario.DoesNotExist:
             messages.error(request, "Não existe usuário cadastrado com este e-mail.")
             return redirect("esqueci_senha")
+        try:
+                
+            senha_provisoria = get_random_string(10)
+            send_mail(
+                "Senha provisória - Livro de Receitas",
+                f"Sua senha provisória é: {senha_provisoria}\n\nAo entrar no sistema, você será obrigado a criar uma nova senha.",
+                settings.DEFAULT_FROM_EMAIL,
+                [usuario.email],
+                fail_silently=False,
+            )
+            usuario.set_password(senha_provisoria)
+            usuario.deve_trocar_senha = True
+            usuario.save()
+            registrar_log(
+                usuario=usuario,
+                acao="ALTERAR_SENHA",
+                id_objeto_alvo=usuario.id,
+                nome_objeto=usuario.username,
+            )
 
-        senha_provisoria = get_random_string(10)
+            
 
-        usuario.set_password(senha_provisoria)
-        usuario.deve_trocar_senha = True
-        usuario.save()
-        registrar_log(
-            usuario=usuario,
-            acao="ALTERAR_SENHA",
-            id_objeto_alvo=usuario.id,
-            nome_objeto=usuario.username,
-        )
-
-        send_mail(
-            "Senha provisória - Livro de Receitas",
-            f"Sua senha provisória é: {senha_provisoria}\n\nAo entrar no sistema, você será obrigado a criar uma nova senha.",
-            settings.DEFAULT_FROM_EMAIL,
-            [usuario.email],
-            fail_silently=False,
-        )
-
-        messages.success(request, "Uma senha provisória foi enviada para seu e-mail.")
-        return redirect("login")
-
-    return render(request, "esqueci_senha.html")
+            messages.success(request, "Uma senha provisória foi enviada para seu e-mail.")
+            return redirect("login")
+        except:
+            messages.error(request, "Erro na recuperação de senha, por favor tente novamente ou entre em contato com o suporte")
+    return redirect("login")
 
 @usuario
 def trocar_senha_obrigatoria(request):

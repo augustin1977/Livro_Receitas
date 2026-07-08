@@ -138,16 +138,20 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # configuração de email
 
 # Configuração de teste
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL = "nao-responda@livroreceitas.local"
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# DEFAULT_FROM_EMAIL = "nao-responda@livroreceitas.local"
 
 # configuração de produção (gmail)
 
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-# EMAIL_HOST = "smtp.gmail.com"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 # EMAIL_PORT = 587
 # EMAIL_USE_TLS = True
 
-# EMAIL_HOST_USER = sv.email_host_user
-# EMAIL_HOST_PASSWORD = sv.email_host_password
-# DEFAULT_FROM_EMAIL = sv.email_host_user
+EMAIL_PORT = 465
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+
+EMAIL_HOST_USER = sv.email_host_user
+EMAIL_HOST_PASSWORD = sv.email_host_password
+DEFAULT_FROM_EMAIL = sv.email_host_user
