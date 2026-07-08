@@ -94,13 +94,11 @@ def esqueci_senha(request):
                 nome_objeto=usuario.username,
             )
 
-            
-
             messages.success(request, "Uma senha provisória foi enviada para seu e-mail.")
             return redirect("login")
         except:
             messages.error(request, "Erro na recuperação de senha, por favor tente novamente ou entre em contato com o suporte")
-    return redirect("login")
+    return render(request, "esqueci_senha.html")
 
 @usuario
 def trocar_senha_obrigatoria(request):
