@@ -62,6 +62,17 @@ class ReceitasVisiveisParaTests(TestCase):
 
         self.assertNotIn(self.receita_clara.id, receitas_ids)
 
+    def test_grupo_tecnico_sem_familia_nao_compartilha_receitas(self):
+        grupo_tecnico = Grupo.objects.create(nome="Sem_Familia")
+        grupo_tecnico.membros.add(self.alice, self.clara)
+
+        receitas_ids = set(
+            receitas_visiveis_para(self.alice).values_list("id", flat=True)
+        )
+
+        self.assertIn(self.receita_alice.id, receitas_ids)
+        self.assertNotIn(self.receita_clara.id, receitas_ids)
+
     def test_usuario_nao_favorita_receita_invisivel(self):
         self.client.force_login(self.alice)
 
@@ -381,6 +392,22 @@ class CatalogoReceitaTests(TestCase):
             ),
             1,
         )
+
+    def test_excluir_unidade_exige_post(self):
+        unidade = Unidade.objects.create(unidades="Unidade para excluir")
+
+        resposta = self.client.get(reverse("excluir_unidade", args=[unidade.id]))
+
+        self.assertEqual(resposta.status_code, 405)
+        self.assertTrue(Unidade.objects.filter(id=unidade.id).exists())
+
+    def test_excluir_ingrediente_exige_post(self):
+        material = Material.objects.create(nome="Ingrediente para excluir")
+
+        resposta = self.client.get(reverse("excluir_ingrediente", args=[material.id]))
+
+        self.assertEqual(resposta.status_code, 405)
+        self.assertTrue(Material.objects.filter(id=material.id).exists())
 
     def test_nao_edita_unidade_para_nome_ja_existente(self):
         unidade_original = Unidade.objects.create(unidades="Unidade original")

@@ -65,7 +65,7 @@ class ConviteGrupoTests(TestCase):
     def test_usuario_aceita_convite_e_vira_membro_do_grupo(self):
         self.client.force_login(self.convidado)
 
-        resposta = self.client.get(
+        resposta = self.client.post(
             reverse("responder_convite", args=[self.convite.id, "aceitar"])
         )
 
@@ -76,13 +76,24 @@ class ConviteGrupoTests(TestCase):
     def test_usuario_recusa_convite_sem_entrar_no_grupo(self):
         self.client.force_login(self.convidado)
 
-        resposta = self.client.get(
+        resposta = self.client.post(
             reverse("responder_convite", args=[self.convite.id, "recusar"])
         )
 
         self.assertEqual(resposta.status_code, 302)
         self.assertFalse(self.grupo.membros.filter(id=self.convidado.id).exists())
         self.assertFalse(ConviteGrupo.objects.filter(id=self.convite.id).exists())
+
+    def test_responder_convite_exige_post(self):
+        self.client.force_login(self.convidado)
+
+        resposta = self.client.get(
+            reverse("responder_convite", args=[self.convite.id, "aceitar"])
+        )
+
+        self.assertEqual(resposta.status_code, 405)
+        self.assertFalse(self.grupo.membros.filter(id=self.convidado.id).exists())
+        self.assertTrue(ConviteGrupo.objects.filter(id=self.convite.id).exists())
 
 
 class AdministracaoGrupoPermissaoTests(TestCase):
@@ -116,7 +127,7 @@ class AdministracaoGrupoPermissaoTests(TestCase):
     def test_admin_do_grupo_remove_membro_do_proprio_grupo(self):
         self.client.force_login(self.admin_a)
 
-        resposta = self.client.get(
+        resposta = self.client.post(
             reverse("remover_membro", args=[self.grupo_a.id, self.membro_a.id])
         )
 
@@ -126,7 +137,7 @@ class AdministracaoGrupoPermissaoTests(TestCase):
     def test_admin_de_um_grupo_nao_remove_membro_de_outro_grupo(self):
         self.client.force_login(self.admin_a)
 
-        resposta = self.client.get(
+        resposta = self.client.post(
             reverse("remover_membro", args=[self.grupo_b.id, self.membro_b.id])
         )
 
@@ -136,7 +147,7 @@ class AdministracaoGrupoPermissaoTests(TestCase):
     def test_admin_geral_pode_promover_membro_de_qualquer_grupo(self):
         self.client.force_login(self.admin_geral)
 
-        resposta = self.client.get(
+        resposta = self.client.post(
             reverse("promover_administrador", args=[self.grupo_b.id, self.membro_b.id])
         )
 
@@ -144,3 +155,61 @@ class AdministracaoGrupoPermissaoTests(TestCase):
         self.assertTrue(
             self.grupo_b.administradores.filter(id=self.membro_b.id).exists()
         )
+
+    def test_admin_do_grupo_nao_remove_membro_via_get(self):
+        self.client.force_login(self.admin_a)
+
+        resposta = self.client.get(
+            reverse("remover_membro", args=[self.grupo_a.id, self.membro_a.id])
+        )
+
+        self.assertEqual(resposta.status_code, 405)
+        self.assertTrue(self.grupo_a.membros.filter(id=self.membro_a.id).exists())
+
+    def test_admin_geral_nao_promove_membro_via_get(self):
+        self.client.force_login(self.admin_geral)
+
+        resposta = self.client.get(
+            reverse("promover_administrador", args=[self.grupo_b.id, self.membro_b.id])
+        )
+
+        self.assertEqual(resposta.status_code, 405)
+        self.assertFalse(
+            self.grupo_b.administradores.filter(id=self.membro_b.id).exists()
+        )
+
+    def test_usuario_nao_sai_do_grupo_via_get(self):
+        self.client.force_login(self.membro_a)
+
+        resposta = self.client.get(reverse("sair_do_grupo", args=[self.grupo_a.id]))
+
+        self.assertEqual(resposta.status_code, 405)
+        self.assertTrue(self.grupo_a.membros.filter(id=self.membro_a.id).exists())
+
+    def test_admin_nao_revoga_administrador_via_get(self):
+        self.grupo_a.administradores.add(self.membro_a)
+        self.client.force_login(self.admin_a)
+
+        resposta = self.client.get(
+            reverse("revogar_administrador", args=[self.grupo_a.id, self.membro_a.id])
+        )
+
+        self.assertEqual(resposta.status_code, 405)
+        self.assertTrue(
+            self.grupo_a.administradores.filter(id=self.membro_a.id).exists()
+        )
+
+    def test_admin_nao_exclui_grupo_via_get(self):
+        self.client.force_login(self.admin_a)
+
+        resposta = self.client.get(reverse("excluir_grupo", args=[self.grupo_a.id]))
+
+        self.assertEqual(resposta.status_code, 405)
+        self.assertTrue(Grupo.objects.filter(id=self.grupo_a.id).exists())
+
+    def test_logout_exige_post(self):
+        self.client.force_login(self.admin_a)
+
+        resposta = self.client.get(reverse("sair"))
+
+        self.assertEqual(resposta.status_code, 405)

@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% block 'titulo' %} Convites de Grupo {% endblock %}
-{% block 'menu'%} 
+{% block 'menu'%}
 {% include 'menu_basico.html' %}
 {% endblock %}
 {% block 'conteudo' %}
 <div class="container mt-4 mb-5">
     <h3>Convites para Entrar em Grupos</h3>
-    <p class="text-muted small">Você só fará parte do grupo e compartilhará suas receitas após aceitar o convite.</p>
+    <p class="text-muted small">Voce so fara parte do grupo e compartilhara suas receitas apos aceitar o convite.</p>
     <hr>
 
     {% if convites %}
@@ -15,8 +15,8 @@
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr>
-                            <th scope="col" class="text-center" style="width: 150px;">Ações</th>
-                            <th scope="col">Grupo / Família</th>
+                            <th scope="col" class="text-center" style="width: 150px;">Acoes</th>
+                            <th scope="col">Grupo / Familia</th>
                             <th scope="col">Data do Convite</th>
                         </tr>
                     </thead>
@@ -24,12 +24,18 @@
                         {% for convite in convites %}
                         <tr>
                             <td class="text-center">
-                                <a href="{% url 'responder_convite' convite.id 'aceitar' %}" class="btn btn-sm btn-success me-1" title="Aceitar">
-                                    ✓ Aceitar
-                                </a>
-                                <a href="{% url 'responder_convite' convite.id 'recusar' %}" class="btn btn-sm btn-outline-danger" title="Recusar" onclick="return confirm('Deseja recusar o convite?');">
-                                    ✕
-                                </a>
+                                <form method="post" action="{% url 'responder_convite' convite.id 'aceitar' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success me-1" title="Aceitar">
+                                        &check; Aceitar
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'responder_convite' convite.id 'recusar' %}" class="d-inline" onsubmit="return confirm('Deseja recusar o convite?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Recusar">
+                                        &times;
+                                    </button>
+                                </form>
                             </td>
                             <td>
                                 <strong>{{ convite.grupo.nome }}</strong>
@@ -43,7 +49,7 @@
         </div>
     {% else %}
         <div class="alert alert-light border mt-4" role="alert">
-            Você não tem nenhum convite pendente no momento.
+            Voce nao tem nenhum convite pendente no momento.
         </div>
     {% endif %}
 </div>

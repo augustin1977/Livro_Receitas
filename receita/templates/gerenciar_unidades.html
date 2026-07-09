@@ -52,7 +52,10 @@
                             <td class="align-middle ps-4">{{ unidade.unidades }}</td>
                             <td class="text-end align-middle pe-4">
                                 <a href="{% url 'editar_unidade' unidade.id %}" class="btn btn-sm btn-primary me-1">Editar</a>
-                                <a href="{% url 'excluir_unidade' unidade.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir esta unidade?');">Excluir</a>
+                                <form method="post" action="{% url 'excluir_unidade' unidade.id %}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir esta unidade?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+                                </form>
                             </td>
                         </tr>
                         {% empty %}

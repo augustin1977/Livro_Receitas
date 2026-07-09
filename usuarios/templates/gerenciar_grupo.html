@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block 'titulo' %} Gerenciar Grupo {% endblock %}
-{% block 'menu'%} 
+{% block 'menu'%}
 {% include 'menu_basico.html' %}
 {% endblock %}
 
@@ -15,9 +15,10 @@
             {% if request.user in grupo.administradores.all %}
                 <div class="card p-3 shadow-sm bg-light">
                     <h5>Convidar Membro</h5>
-                    <form method="POST" action="{% url 'adicionar_membro' grupo.id %}"> {% csrf_token %}
+                    <form method="POST" action="{% url 'adicionar_membro' grupo.id %}">
+                        {% csrf_token %}
                         <div class="mb-3">
-                            <label class="form-label">Nickname ou E-mail do Usuário</label>
+                            <label class="form-label">Nickname ou E-mail do Usuario</label>
                             <input name="busca" class="form-control" type="text" placeholder="Ex: joao.silva ou joao@email.com" required>
                         </div>
                         <button type="submit" class="btn btn-primary btn-sm">Incluir no Grupo</button>
@@ -25,73 +26,74 @@
                 </div>
             {% else %}
                 <div class="alert alert-info">
-                    Você é membro deste grupo. Apenas os administradores listados ao lado podem convidar novas pessoas.
+                    Voce e membro deste grupo. Apenas os administradores listados ao lado podem convidar novas pessoas.
                 </div>
             {% endif %}
         </div>
 
-<div class="col-md-7">
-    <h5>Membros Atuais</h5>
-    <table class="table table-hover align-middle">
-        <thead>
-            <tr>
-                {% if request.user in grupo.administradores.all or request.user.is_staff %}
-                    <th scope="col" style="width: 90px;">Ações</th>
-                {% endif %}
-                <th scope="col">Membro</th>
-                <th scope="col">Nível</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for membro in grupo.membros.all %}
-            <tr>
-                {% if request.user in grupo.administradores.all or request.user.is_staff %}
-                    <td>
-                        <div class="d-flex gap-1">
-                            {% if membro not in grupo.administradores.all %}
-                                <a href="{% url 'promover_administrador' grupo.id membro.id %}" 
-                                   class="btn btn-sm btn-outline-primary" 
-                                   title="Promover a Administrador"
-                                   onclick="return confirm('Deseja dar permissões de administrador para {{ membro.username }}?');">
-                                    <i class="bi bi-shield-check"></i>
-                                </a>
+        <div class="col-md-7">
+            <h5>Membros Atuais</h5>
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        {% if request.user in grupo.administradores.all or request.user.is_staff %}
+                            <th scope="col" style="width: 90px;">Acoes</th>
+                        {% endif %}
+                        <th scope="col">Membro</th>
+                        <th scope="col">Nivel</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for membro in grupo.membros.all %}
+                    <tr>
+                        {% if request.user in grupo.administradores.all or request.user.is_staff %}
+                            <td>
+                                <div class="d-flex gap-1">
+                                    {% if membro not in grupo.administradores.all %}
+                                        <form method="post" action="{% url 'promover_administrador' grupo.id membro.id %}" class="d-inline" onsubmit="return confirm('Deseja dar permissoes de administrador para {{ membro.username }}?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Promover a Administrador">
+                                                <i class="bi bi-shield-check"></i>
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <form method="post" action="{% url 'revogar_administrador' grupo.id membro.id %}" class="d-inline" onsubmit="return confirm('Deseja remover as permissoes de administrador de {{ membro.username }}?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Revogar Privilegios de Admin">
+                                                <i class="bi bi-shield-slash-fill"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+
+                                    {% if membro != request.user %}
+                                        <form method="post" action="{% url 'remover_membro' grupo.id membro.id %}" class="d-inline" onsubmit="return confirm('Deseja mesmo remover {{ membro.username }} deste grupo?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Remover do Grupo">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        {% endif %}
+
+                        <td>
+                            <strong>{{ membro.first_name }} {{ membro.last_name }}</strong> <br>
+                            <span class="text-muted small">@{{ membro.username }}</span>
+                        </td>
+
+                        <td>
+                            {% if membro in grupo.administradores.all %}
+                                <span class="badge bg-danger">Dono / Admin</span>
                             {% else %}
-                                <a href="{% url 'revogar_administrador' grupo.id membro.id %}" 
-                                   class="btn btn-sm btn-outline-warning" 
-                                   title="Revogar Privilégios de Admin"
-                                   onclick="return confirm('Deseja remover as permissões de administrador de {{ membro.username }}?')">
-                                    <i class="bi bi-shield-slash-fill"></i>
-                                </a>
+                                <span class="badge bg-secondary">Membro</span>
                             {% endif %}
-                            
-                            {% if membro != request.user %}
-                                <a href="{% url 'remover_membro' grupo.id membro.id %}" 
-                                   class="btn btn-sm btn-outline-danger" 
-                                   title="Remover do Grupo" 
-                                   onclick="return confirm('Deseja mesmo remover {{ membro.username }} deste grupo?');">
-                                    <i class="bi bi-trash"></i>
-                                </a>
-                            {% endif %}
-                        </div>
-                    </td>
-                {% endif %}
-                
-                <td>
-                    <strong>{{ membro.first_name }} {{ membro.last_name }}</strong> <br>
-                    <span class="text-muted small">@{{ membro.username }}</span>
-                </td>
-                
-                <td>
-                    {% if membro in grupo.administradores.all %}
-                        <span class="badge bg-danger">Dono / Admin</span>
-                    {% else %}
-                        <span class="badge bg-secondary">Membro</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}

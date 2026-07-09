@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
+from django.views.decorators.http import require_POST
 from logs.utils import registrar_log
 
 
@@ -387,6 +388,7 @@ def validar_login(request):
     return redirect("/receita/home/")
 
 @usuario    
+@require_POST
 def sair(request):
     request.session.flush() # sair do usuário
     return redirect('/auth/login')
@@ -492,6 +494,7 @@ def meus_convites(request):
     convites = ConviteGrupo.objects.filter(usuario_convidado=request.user).order_by('-data_envio')
     return render(request, "meus_convites.html", {'convites': convites})
 @usuario
+@require_POST
 def responder_convite(request, convite_id, acao):
     try:
         convite = ConviteGrupo.objects.get(id=convite_id, usuario_convidado=request.user)
@@ -530,6 +533,7 @@ def meus_grupos_administrados(request):
     return render(request, "meus_grupos.html", {'grupos': grupos})
 
 @usuario
+@require_POST
 def sair_do_grupo(request, grupo_id):
     try:
         grupo = Grupo.objects.get(id=grupo_id)
@@ -582,6 +586,7 @@ def sair_do_grupo(request, grupo_id):
     messages.success(request, f"Você saiu do grupo '{grupo.nome}' com sucesso.")
     return redirect('meus_grupos_administrados')
 @admin_grupo
+@require_POST
 def remover_membro(request, grupo_id, usuario_id):
     # Tratamento de erro customizado sem telas de erro técnicas do Django
     try:
@@ -617,6 +622,7 @@ def remover_membro(request, grupo_id, usuario_id):
     return redirect('gerenciar_grupo', grupo_id=grupo.id)
 
 @admin_grupo
+@require_POST
 def promover_administrador(request, grupo_id, usuario_id):
     try:
         grupo = Grupo.objects.get(id=grupo_id)
@@ -653,6 +659,7 @@ def promover_administrador(request, grupo_id, usuario_id):
     messages.success(request, f"Usuário '{usuario_alvo.username}' agora também é administrador do grupo!")
     return redirect('gerenciar_grupo', grupo_id=grupo.id)
 @admin_grupo
+@require_POST
 def revogar_administrador(request, grupo_id, usuario_id):
     try:
         grupo = Grupo.objects.get(id=grupo_id)
@@ -694,6 +701,7 @@ def revogar_administrador(request, grupo_id, usuario_id):
         
     return redirect('gerenciar_grupo', grupo_id=grupo.id)
 @admin_grupo
+@require_POST
 def excluir_grupo(request, grupo_id):
     try:
         grupo = Grupo.objects.get(id=grupo_id)

@@ -5,7 +5,7 @@ from usuarios.models import *
 from django.db.models import Q
 from django.http import JsonResponse
 from .models import *
-from .selectors import receitas_visiveis_para
+from .selectors import grupos_sociais_do_usuario, receitas_visiveis_para
 from .utils import (
     existe_nome_equivalente,
     normalizar_nome_catalogo,
@@ -58,15 +58,6 @@ ACOES_GRUPO_HOME = {
     "ENVIAR_CONVITE_GRUPO",
     "ACEITAR_CONVITE_GRUPO",
 }
-
-NOME_GRUPO_TECNICO_SEM_FAMILIA = "Sem_Familia"
-
-
-def grupos_sociais_do_usuario(usuario):
-    return Grupo.objects.filter(membros=usuario).exclude(
-        nome=NOME_GRUPO_TECNICO_SEM_FAMILIA
-    )
-
 
 def usuarios_da_rede_home_ids(usuario):
     grupos_usuario = grupos_sociais_do_usuario(usuario)
@@ -353,6 +344,7 @@ def editar_unidade(request, pk):
     })
 
 @admin_geral
+@require_POST
 def excluir_unidade(request, pk):
     try :
         unidade = Unidade.objects.get(pk=pk)
@@ -792,6 +784,7 @@ def editar_ingrediente(request, pk):
     })
 
 @admin_geral
+@require_POST
 def excluir_ingrediente(request, pk):
     try :
         ingrediente = Material.objects.get(pk=pk)

@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.http import urlencode
+from django.views.decorators.http import require_POST
 
 from autentica import usuario
 from logs.utils import registrar_log
@@ -92,6 +93,7 @@ def editar_comentario(request, comentario_id):
 
 
 @usuario
+@require_POST
 def excluir_comentario(request, comentario_id):
     try:
         comentario = Comentario.objects.select_related("receita", "usuario").get(

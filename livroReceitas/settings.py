@@ -14,19 +14,14 @@ from pathlib import Path
 import os 
 import system_variables as sv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = sv.secret_key
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = sv.debug
 
-ALLOWED_HOSTS = ["web.ferrazaugustin.tec.br", "receitas.ferrazaugustin.tec.br", "192.168.0.11", "*"]
+ALLOWED_HOSTS = sv.enderecos_autorizados
 
 # Diz ao Django que ele está atrás de um proxy reverso seguro
 USE_X_FORWARDED_HOST = True

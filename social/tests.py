@@ -102,3 +102,33 @@ class ComentarioPermissaoTests(TestCase):
         comentario.refresh_from_db()
         self.assertEqual(resposta.status_code, 302)
         self.assertEqual(comentario.texto, "Original")
+
+    def test_excluir_comentario_exige_post(self):
+        comentario = Comentario.objects.create(
+            receita=self.receita_bruno,
+            usuario=self.alice,
+            texto="Nao deve apagar via GET",
+        )
+        self.client.force_login(self.alice)
+
+        resposta = self.client.get(
+            reverse("excluir_comentario", args=[comentario.id])
+        )
+
+        self.assertEqual(resposta.status_code, 405)
+        self.assertTrue(Comentario.objects.filter(id=comentario.id).exists())
+
+    def test_autor_exclui_proprio_comentario_via_post(self):
+        comentario = Comentario.objects.create(
+            receita=self.receita_bruno,
+            usuario=self.alice,
+            texto="Pode apagar via POST",
+        )
+        self.client.force_login(self.alice)
+
+        resposta = self.client.post(
+            reverse("excluir_comentario", args=[comentario.id])
+        )
+
+        self.assertEqual(resposta.status_code, 302)
+        self.assertFalse(Comentario.objects.filter(id=comentario.id).exists())

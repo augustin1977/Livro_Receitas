@@ -1,23 +1,23 @@
 {% extends 'base.html' %}
 {% block 'titulo' %} Meus Grupos Administrados {% endblock %}
-{% block 'menu'%} 
+{% block 'menu'%}
 {% include 'menu_basico.html' %}
 {% endblock %}
 {% block 'conteudo' %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>Meus Grupos e Famílias</h3>
+        <h3>Meus Grupos e Familias</h3>
         <a class="btn btn-success btn-sm" href="{% url 'cadastrar_grupo' %}">+ Criar Novo Grupo</a>
     </div>
-    
+
     {% if grupos %}
         <table class="table table-hover align-middle mb-5">
             <thead>
               <tr>
-                <th scope="col">Nome do Grupo / Família</th>
-                <th scope="col">Seu Nível</th>
+                <th scope="col">Nome do Grupo / Familia</th>
+                <th scope="col">Seu Nivel</th>
                 <th scope="col" class="text-center">Total de Membros</th>
-                <th scope="col" class="text-center">Ações</th>
+                <th scope="col" class="text-center">Acoes</th>
               </tr>
             </thead>
             <tbody>
@@ -39,19 +39,19 @@
                             <a href="{% url 'gerenciar_grupo' grupo.id %}" class="btn btn-sm btn-outline-primary me-1">
                                Membros
                             </a>
-                            <a href="{% url 'excluir_grupo' grupo.id %}" 
-                               class="btn btn-sm btn-outline-danger" 
-                               title="Excluir Grupo" 
-                               onclick="return confirm('Deseja mesmo excluir o grupo {{ grupo.nome }} permanentemente?');">
-                                <i class="bi bi-trash"></i>
-                            </a>
+                            <form method="post" action="{% url 'excluir_grupo' grupo.id %}" class="d-inline" onsubmit="return confirm('Deseja mesmo excluir o grupo {{ grupo.nome }} permanentemente?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir Grupo">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
                         {% else %}
-                            <a href="{% url 'sair_do_grupo' grupo.id %}" 
-                               class="btn btn-sm btn-outline-danger text-dark" 
-                               title="Sair do Grupo"
-                               onclick="return confirm('Tem certeza que deseja sair do grupo {{ grupo.nome }}? Você perderá o acesso às receitas dele.');">
-                               <i class="bi bi-door-open"></i><i class="bi bi-arrow-left"></i>
-                            </a>
+                            <form method="post" action="{% url 'sair_do_grupo' grupo.id %}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja sair do grupo {{ grupo.nome }}? Voce perdera o acesso as receitas dele.');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger text-dark" title="Sair do Grupo">
+                                    <i class="bi bi-door-open"></i><i class="bi bi-arrow-left"></i>
+                                </button>
+                            </form>
                         {% endif %}
                     </td>
                 </tr>
@@ -60,7 +60,7 @@
         </table>
     {% else %}
         <div class="alert alert-info mt-4" role="alert">
-            Você não participa de nenhum grupo no momento. Que tal <a href="{% url 'cadastrar_grupo' %}" class="alert-link">criar um agora</a>?
+            Voce nao participa de nenhum grupo no momento. Que tal <a href="{% url 'cadastrar_grupo' %}" class="alert-link">criar um agora</a>?
         </div>
     {% endif %}
 </div>
