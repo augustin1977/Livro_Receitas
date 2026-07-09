@@ -27,6 +27,11 @@ ALLOWED_HOSTS = sv.enderecos_autorizados
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# Sessao expira ao fechar o navegador ou apos 4 horas sem nenhuma requisicao.
+SESSION_COOKIE_AGE = 12 * 60 * 60
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
+
 # Application definition
 
 INSTALLED_APPS = [

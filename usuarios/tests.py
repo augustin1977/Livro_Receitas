@@ -1,8 +1,16 @@
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 
 from .models import ConviteGrupo, Grupo, Tipo
+
+
+class ConfiguracaoSessaoTests(TestCase):
+    def test_sessao_expira_apos_quatro_horas_de_inatividade_ou_ao_fechar_browser(self):
+        self.assertEqual(settings.SESSION_COOKIE_AGE, 12 * 60 * 60)
+        self.assertTrue(settings.SESSION_EXPIRE_AT_BROWSER_CLOSE)
+        self.assertTrue(settings.SESSION_SAVE_EVERY_REQUEST)
 
 
 class CadastroUsuarioTests(TestCase):
