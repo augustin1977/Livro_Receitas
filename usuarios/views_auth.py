@@ -8,6 +8,7 @@ from django.core.mail import send_mail
 from django.shortcuts import redirect, render
 from django.utils.crypto import get_random_string
 from django.views.decorators.http import require_POST
+from django.db.models import Q
 
 from autentica import usuario
 from logs.utils import registrar_log
@@ -146,7 +147,7 @@ def validar_login(request):
     senha = request.POST.get("senha", "")
 
     try:
-        usuario_objeto = Usuario.objects.get(username=nome)
+        usuario_objeto = Usuario.objects.get(Q(username=nome)|Q(email=nome))
     except Usuario.DoesNotExist:
         return redirect("/auth/login/?status=1")
 
