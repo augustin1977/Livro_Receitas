@@ -17,6 +17,7 @@ from .utils import (
 
 @admin_geral
 def gerenciar_unidades(request):
+    """Lista e cria unidades garantindo nome normalizado e sem duplicidade equivalente."""
     if request.method == "POST":
         nome = normalizar_nome_catalogo(request.POST.get("nome_unidade"))
         if nome:
@@ -40,6 +41,7 @@ def gerenciar_unidades(request):
 
 @admin_geral
 def editar_unidade(request, pk):
+    """Edita unidade existente sem permitir nome equivalente a outra unidade."""
     try:
         unidade = Unidade.objects.get(pk=pk)
         nome_antigo = str(unidade.unidades)
@@ -80,6 +82,7 @@ def editar_unidade(request, pk):
 @admin_geral
 @require_POST
 def excluir_unidade(request, pk):
+    """Exclui unidade por POST e registra auditoria da remocao."""
     try:
         unidade = Unidade.objects.get(pk=pk)
     except Exception:
@@ -99,6 +102,7 @@ def excluir_unidade(request, pk):
 
 @admin_geral
 def gerenciar_ingredientes(request):
+    """Lista e cria ingredientes garantindo nome normalizado e sem duplicidade equivalente."""
     if request.method == "POST":
         nome = normalizar_nome_catalogo(request.POST.get("nome_ingrediente"))
         if nome:
@@ -121,6 +125,7 @@ def gerenciar_ingredientes(request):
 
 @admin_geral
 def editar_ingrediente(request, pk):
+    """Edita ingrediente existente sem permitir nome equivalente a outro ingrediente."""
     try:
         ingrediente = Material.objects.get(pk=pk)
     except Exception:
@@ -161,6 +166,7 @@ def editar_ingrediente(request, pk):
 @admin_geral
 @require_POST
 def excluir_ingrediente(request, pk):
+    """Exclui ingrediente por POST e registra auditoria da remocao."""
     try:
         ingrediente = Material.objects.get(pk=pk)
     except Exception:

@@ -13,6 +13,7 @@ from .permissions import usuario_administra_grupo
 
 @usuario
 def cadastrar_grupo(request):
+    """Cria um grupo e torna o criador membro e administrador inicial."""
     if request.method == "POST":
         nome_grupo = request.POST.get("nome", "").strip()
 
@@ -45,6 +46,7 @@ def cadastrar_grupo(request):
 
 @usuario
 def gerenciar_grupo(request, grupo_id):
+    """Exibe a administracao do grupo apenas para membros do proprio grupo."""
     try:
         grupo = Grupo.objects.get(id=grupo_id)
     except Exception:
@@ -60,6 +62,7 @@ def gerenciar_grupo(request, grupo_id):
 
 @usuario
 def adicionar_membro(request, grupo_id):
+    """Envia convite pendente para usuario existente, sem adicionar membro diretamente."""
     if request.method != "POST":
         return redirect("meus_grupos_administrados")
 
@@ -112,6 +115,7 @@ def adicionar_membro(request, grupo_id):
 
 @usuario
 def meus_convites(request):
+    """Lista convites pendentes destinados ao usuario logado."""
     convites = ConviteGrupo.objects.filter(
         usuario_convidado=request.user
     ).order_by("-data_envio")
@@ -121,6 +125,7 @@ def meus_convites(request):
 @usuario
 @require_POST
 def responder_convite(request, convite_id, acao):
+    """Aceita ou recusa convite por POST e remove o convite apos a decisao."""
     try:
         convite = ConviteGrupo.objects.get(id=convite_id, usuario_convidado=request.user)
     except Exception:
@@ -153,6 +158,7 @@ def responder_convite(request, convite_id, acao):
 
 @usuario
 def meus_grupos_administrados(request):
+    """Lista todos os grupos dos quais o usuario participa."""
     grupos = Grupo.objects.filter(membros=request.user).distinct().order_by("nome")
     return render(request, "meus_grupos.html", {"grupos": grupos})
 
@@ -160,6 +166,7 @@ def meus_grupos_administrados(request):
 @usuario
 @require_POST
 def sair_do_grupo(request, grupo_id):
+    """Remove o usuario do grupo sem permitir que um grupo com membros fique sem admin."""
     try:
         grupo = Grupo.objects.get(id=grupo_id)
     except Exception:
@@ -213,6 +220,7 @@ def sair_do_grupo(request, grupo_id):
 @admin_grupo
 @require_POST
 def remover_membro(request, grupo_id, usuario_id):
+    """Remove outro membro do grupo quando o solicitante tem permissao administrativa."""
     try:
         grupo = Grupo.objects.get(id=grupo_id)
         usuario_alvo = Usuario.objects.get(id=usuario_id)
@@ -246,6 +254,7 @@ def remover_membro(request, grupo_id, usuario_id):
 @admin_grupo
 @require_POST
 def promover_administrador(request, grupo_id, usuario_id):
+    """Promove membro existente a administrador do grupo."""
     try:
         grupo = Grupo.objects.get(id=grupo_id)
         usuario_alvo = Usuario.objects.get(id=usuario_id)
@@ -281,6 +290,7 @@ def promover_administrador(request, grupo_id, usuario_id):
 @admin_grupo
 @require_POST
 def revogar_administrador(request, grupo_id, usuario_id):
+    """Revoga administracao sem permitir que o grupo fique sem responsavel."""
     try:
         grupo = Grupo.objects.get(id=grupo_id)
         usuario_alvo = Usuario.objects.get(id=usuario_id)
@@ -324,6 +334,7 @@ def revogar_administrador(request, grupo_id, usuario_id):
 @admin_grupo
 @require_POST
 def excluir_grupo(request, grupo_id):
+    """Exclui o grupo apos limpar vinculos de membros e administradores."""
     try:
         grupo = Grupo.objects.get(id=grupo_id)
     except Exception:

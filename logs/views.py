@@ -7,6 +7,7 @@ from .models import LogAtividade
 
 @admin_geral
 def painel_administrador_logs(request):
+    """Exibe auditoria administrativa com filtros por tipo de acao."""
     acao_filtro = request.GET.get("acao")
     if acao_filtro=="RECEITA":
         filtro=(Q(acao="CRIAR_RECEITA")|

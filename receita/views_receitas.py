@@ -26,6 +26,7 @@ from .utils import ordenar_objetos_por_nome
 
 @usuario
 def cadastrar_receita(request):
+    """Exibe o formulario de nova receita com materiais e unidades ordenados."""
     materiais = ordenar_objetos_por_nome(Material.objects.all(), "nome")
     unidades = ordenar_objetos_por_nome(Unidade.objects.all(), "unidades")
 
@@ -38,6 +39,7 @@ def cadastrar_receita(request):
 
 @usuario
 def valida_cadastro_material(request):
+    """Cria receita e ingredientes a partir do formulario serializado da tela."""
     if request.method == "POST":
         nome_receita = request.POST.get("nome")
         modo_preparo = request.POST.get("ModoPreparo")
@@ -158,6 +160,7 @@ def copiar_receita(request, receita_id):
 
 @usuario
 def mostrar_receita(request):
+    """Exibe uma receita somente se ela for propria ou compartilhada por grupo social."""
     try:
         receita_id = int(request.GET.get("receita"))
     except (TypeError, ValueError):
@@ -192,6 +195,7 @@ def mostrar_receita(request):
 
 @usuario
 def mostrar_receitas(request):
+    """Lista receitas proprias e receitas compartilhadas agrupadas por grupo."""
     usuario_atual = request.user
 
     receitas_pessoais = list(
@@ -237,6 +241,7 @@ def mostrar_receitas(request):
 
 @usuario
 def confirmar_exclusao(request):
+    """Exibe a confirmacao de exclusao apenas para o dono da receita."""
     try:
         receita_id = int(request.GET.get("receita"))
     except (TypeError, ValueError):
@@ -253,6 +258,7 @@ def confirmar_exclusao(request):
 
 @usuario
 def excluir_receita(request):
+    """Exclui receita propria por POST e remove ingredientes protegidos antes."""
     if request.method == "POST":
         try:
             receita_id = int(request.POST.get("receita_id"))
@@ -283,6 +289,7 @@ def excluir_receita(request):
 
 @usuario
 def editar_receita(request):
+    """Atualiza receita propria e registra auditoria das mudancas de ingredientes."""
     try:
         receita_id = int(request.GET.get("receita"))
     except (TypeError, ValueError):
@@ -381,6 +388,7 @@ def editar_receita(request):
 
 @usuario
 def pesquisar_receitas(request):
+    """Pesquisa receitas visiveis por nome, autoria original, dono atual ou ingrediente."""
     termo = request.GET.get("q", "").strip()
     receitas = []
 
@@ -410,6 +418,7 @@ def pesquisar_receitas(request):
 
 @usuario
 def favoritar_receita(request, receita_id):
+    """Alterna favorito via POST retornando JSON para a interface."""
     if request.method != "POST":
         return JsonResponse({
             "sucesso": False,

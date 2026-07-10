@@ -16,12 +16,14 @@ from .models import Usuario
 
 
 def login(request):
+    """Exibe a tela de login e repassa o status usado pelas mensagens da pagina."""
     status = str(request.GET.get("status"))
     return render(request, "login.html", {"status": status})
 
 
 @usuario
 def alterar_senha(request):
+    """Permite ao usuario autenticado trocar a senha informando a senha atual."""
     if request.method == "POST":
         senha_atual = request.POST.get("senha_atual")
         nova_senha = request.POST.get("nova_senha")
@@ -58,6 +60,7 @@ def alterar_senha(request):
 
 
 def esqueci_senha(request):
+    """Gera uma senha provisoria por e-mail e marca troca obrigatoria no proximo login."""
     if request.method == "POST":
         email = request.POST.get("email", "").strip()
 
@@ -100,6 +103,7 @@ def esqueci_senha(request):
 
 @usuario
 def trocar_senha_obrigatoria(request):
+    """Forca a criacao de nova senha quando o usuario esta com senha provisoria."""
     if not request.user.deve_trocar_senha:
         return redirect("home")
 
@@ -134,6 +138,7 @@ def trocar_senha_obrigatoria(request):
 
 
 def validar_login(request):
+    """Autentica credenciais e direciona usuarios com senha provisoria para troca."""
     if request.method != "POST":
         return redirect("login")
 

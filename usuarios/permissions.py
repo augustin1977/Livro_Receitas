@@ -2,6 +2,7 @@
 
 
 def usuario_e_admin_geral(request):
+    """Indica se o usuario tem permissao administrativa global do sistema."""
     return request.user.is_staff or request.user.is_superuser
 
 

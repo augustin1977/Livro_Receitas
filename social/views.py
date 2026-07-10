@@ -12,6 +12,7 @@ from .models import Comentario
 
 
 def redirecionar_para_receita(receita_id):
+    """Redireciona para a tela de receita mantendo o padrao de query string atual."""
     base_url = reverse("mostrar_receita")
     query_string = urlencode({"receita": receita_id})
     return redirect(f"{base_url}?{query_string}")
@@ -19,6 +20,7 @@ def redirecionar_para_receita(receita_id):
 
 @usuario
 def adicionar_comentario(request, receita_id):
+    """Cria comentario apenas em receita visivel ao usuario logado."""
     if request.method != "POST":
         return redirect("mostrar_receitas")
 
@@ -47,6 +49,7 @@ def adicionar_comentario(request, receita_id):
 
 @usuario
 def editar_comentario(request, comentario_id):
+    """Permite editar somente comentario proprio em receita ainda visivel."""
     if request.method != "POST":
         return redirect("mostrar_receitas")
 
@@ -95,6 +98,7 @@ def editar_comentario(request, comentario_id):
 @usuario
 @require_POST
 def excluir_comentario(request, comentario_id):
+    """Exclui comentario por POST quando o usuario e autor, dono da receita ou admin."""
     try:
         comentario = Comentario.objects.select_related("receita", "usuario").get(
             id=comentario_id

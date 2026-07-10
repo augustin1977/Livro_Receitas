@@ -61,10 +61,12 @@ def usuarios_da_rede_home_ids(usuario_atual):
 
 
 def url_receita(receita_id):
+    """Monta a URL historica da tela de detalhe que recebe o id por query string."""
     return f"{reverse('mostrar_receita')}?receita={receita_id}"
 
 
 def texto_jornal_home(log, nome):
+    """Transforma logs de auditoria em textos curtos para o feed da home."""
     usuario_nome = log.usuario.username if log.usuario else "Alguem"
 
     textos = {
@@ -86,6 +88,7 @@ def texto_jornal_home(log, nome):
 
 
 def receita_id_do_log(log):
+    """Descobre a receita associada a um log de receita ou comentario."""
     if log.acao in ACOES_RECEITA_HOME:
         return log.id_objeto_alvo
 
@@ -97,6 +100,7 @@ def receita_id_do_log(log):
 
 
 def montar_atividade_home(log, receitas_visiveis_ids, grupos_visiveis_ids):
+    """Monta uma atividade clicavel somente se o alvo ainda for visivel ao usuario."""
     if log.acao in ACOES_RECEITA_HOME or log.acao in ACOES_COMENTARIO_HOME:
         receita_id = receita_id_do_log(log)
         if not receita_id or receita_id not in receitas_visiveis_ids:
@@ -132,6 +136,7 @@ def montar_atividade_home(log, receitas_visiveis_ids, grupos_visiveis_ids):
 
 
 def atividades_home_para(usuario_atual, limite=5):
+    """Busca as atividades recentes da rede do usuario respeitando visibilidade."""
     usuarios_rede_ids = usuarios_da_rede_home_ids(usuario_atual)
     receitas_visiveis_ids = set(
         receitas_visiveis_para(usuario_atual).values_list("id", flat=True)
@@ -163,6 +168,7 @@ def atividades_home_para(usuario_atual, limite=5):
 
 @usuario
 def home(request):
+    """Exibe os indicadores, ultimas receitas e atividades visiveis ao usuario."""
     usuario_atual = request.user
 
     total_receitas_pessoais = Receita.objects.filter(usuario=usuario_atual).count()

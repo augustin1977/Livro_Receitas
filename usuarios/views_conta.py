@@ -17,6 +17,7 @@ from .models import Grupo, Tipo, Usuario
 
 @usuario
 def excluir_conta(request):
+    """Exclui a propria conta depois de confirmar senha e remover dados vinculados."""
     if request.method == "POST":
         senha = request.POST.get("senha")
         confirmar = request.POST.get("confirmar")
@@ -56,12 +57,14 @@ def excluir_conta(request):
 
 @admin_geral
 def listar_usuarios(request):
+    """Lista usuarios para administracao geral."""
     usuarios = Usuario.objects.all().order_by("username")
     return render(request, "listar_usuarios.html", {"usuarios": usuarios})
 
 
 @admin_geral
 def excluir_usuario_admin(request, usuario_id):
+    """Permite ao admin geral excluir outra conta sem permitir autoexclusao por esta tela."""
     usuario_alvo = get_object_or_404(Usuario, id=usuario_id)
 
     if usuario_alvo == request.user:
@@ -95,12 +98,14 @@ def excluir_usuario_admin(request, usuario_id):
 
 
 def cadastrar(request):
+    """Exibe o formulario publico de cadastro de usuario."""
     status = str(request.GET.get("status"))
     return render(request, "cadastro.html", {"status": status})
 
 
 @usuario
 def editar(request):
+    """Atualiza dados cadastrais do usuario logado e preserva auditoria da alteracao."""
     usuario_logado = request.user
 
     if request.method == "POST":
@@ -163,6 +168,7 @@ def editar(request):
 
 
 def valida_cadastro(request):
+    """Valida cadastro publico, cria usuario padrao e vincula ao grupo tecnico inicial."""
     if request.method != "POST":
         return redirect("cadastrar")
 

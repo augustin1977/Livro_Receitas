@@ -6,6 +6,7 @@ from logs.utils import registrar_log
 
 
 def dados_auditoria_ingrediente(material, unidade, quantidade):
+    """Converte dados de ingrediente para o formato gravado no log."""
     quantidade = Decimal(quantidade)
     return {
         "material_id": material.id,
@@ -17,6 +18,7 @@ def dados_auditoria_ingrediente(material, unidade, quantidade):
 
 
 def dados_auditoria_ingrediente_existente(ingrediente):
+    """Extrai dados de auditoria de um ingrediente ja salvo."""
     return dados_auditoria_ingrediente(
         ingrediente.material,
         ingrediente.unidade,
